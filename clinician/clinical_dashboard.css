@@ -128,16 +128,16 @@ button {
 .dashboard-container {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 24px;
+    padding: 16px 24px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 16px;
 }
 .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 /* Cards */
@@ -145,13 +145,13 @@ button {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 20px;
+    padding: 16px;
 }
 .card-title-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
 }
 
 /* Live Grid */
@@ -248,9 +248,19 @@ canvas#oscilloscope {
 
 /* History Panel */
 .history-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+.chart-card {
+    height: 250px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+}
+.chart-card-container {
+    position: relative;
+    flex: 1;
+    min-height: 0;
 }
 .date-controls { display: flex; gap: 8px; align-items: center; }
 .btn-tab {
