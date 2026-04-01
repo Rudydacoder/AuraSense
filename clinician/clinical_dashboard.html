@@ -129,14 +129,14 @@
                     <div class="alert-content">
                         <strong>April 1st, 2026</strong> - Total tremor time exceeded 4 hours. Avg Intensity: 8.2/10.
                     </div>
-                    <button class="btn-small">Schedule Follow-up</button>
+                    <button class="btn-small" onclick="window.location.href='mailto:patient@example.com?subject=Aura-Sleeve%20Follow-up&body=We%20need%20to%20schedule%20a%20follow-up%20based%20on%20your%20recent%20Sleeve%20data.'">Schedule Follow-up</button>
                 </div>
                 <div class="alert-item moderate">
                     <div class="alert-icon"><i class="ph-fill ph-info"></i></div>
                     <div class="alert-content">
                         <strong>March 28th, 2026</strong> - 15+ events recorded in 24h period.
                     </div>
-                    <button class="btn-small">Review</button>
+                    <button class="btn-small" onclick="alert('Loading detailed event logs for March 28th...'); this.closest('.alert-item').style.opacity='0.6'; this.textContent='Reviewed';">Review</button>
                 </div>
             </div>
         </section>
