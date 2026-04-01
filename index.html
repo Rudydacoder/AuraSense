@@ -3,153 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Portal - Aura-Sleeve</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="styles.css">
+    <title>AuraSense Gateway</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #14B8A6; /* Patient Theme */
+            --accent-clinical: #059669; /* Clinic Theme */
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 60%);
+        }
+
+        .gateway-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .logo-wrap {
+            margin-bottom: 40px;
+        }
+        .logo-wrap h1 {
+            font-size: 36px;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+        .logo-wrap p {
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        
+        @media (max-width: 600px) {
+            .role-grid { grid-template-columns: 1fr; }
+        }
+
+        .role-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 40px 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .role-card:hover {
+            transform: translateY(-4px);
+            background: rgba(45, 55, 72, 0.9);
+        }
+
+        .role-card.patient:hover { border-color: var(--accent); }
+        .role-card.clinician:hover { border-color: var(--accent-clinical); }
+
+        .role-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+        .role-card.patient .role-icon { color: var(--accent); }
+        .role-card.clinician .role-icon { color: var(--accent-clinical); }
+
+        .role-card h2 {
+            margin: 0 0 12px 0;
+            font-size: 24px;
+        }
+        .role-card p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Clinician Login Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .login-modal {
+            background: var(--bg-panel);
+            padding: 32px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid var(--glass-border);
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px; right: 16px;
+            background: none; border: none;
+            color: var(--text-secondary);
+            font-size: 24px; cursor: pointer;
+        }
+
+        .login-modal h3 {
+            margin-top: 0;
+            color: white;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.2);
+            color: white;
+            font-size: 16px;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-clinical);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-clinical);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-submit:hover {
+            background: #047857;
+        }
+    </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="brand">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
-                <span>AURA<span style="color: #666;">CLINIC</span></span>
+
+    <div class="gateway-container">
+        <div class="logo-wrap">
+            <h1>AuraSense Platform</h1>
+            <p>Select your portal access</p>
+        </div>
+
+        <div class="role-grid">
+            <!-- Patient Route -->
+            <a href="web.html" class="role-card patient">
+                <i class="ph ph-user role-icon"></i>
+                <h2>I am a Patient</h2>
+                <p>Login to your personal Aura-Sleeve dashboard to set up your device, track your own symptoms, and view logs.</p>
+            </a>
+
+            <!-- Clinician Route -->
+            <div class="role-card clinician" id="btnClinician">
+                <i class="ph ph-stethoscope role-icon"></i>
+                <h2>I am a Clinician</h2>
+                <p>Login with your provider ID to securely monitor your patients, review historical heat-maps, and tune hardware.</p>
             </div>
-            
-            <nav class="nav-links">
-                <a href="#" class="nav-link active" data-target="overview">Patient Overview</a>
-                <a href="#" class="nav-link" data-target="tuning">Device Tuning</a>
-                <a href="#" class="nav-link" data-target="logs">Medication Logs</a>
-            </nav>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div>
-                    <h1 class="page-title">Neuro-Orthosis Monitoring</h1>
-                    <p class="subtitle">Patient: John Doe | Device ID: AURA-88X2</p>
-                </div>
-                <div class="header-actions">
-                    <div class="period-selector">
-                        <label for="period">Monitoring Period</label>
-                        <select id="period">
-                            <option value="1">Past 24 Hours</option>
-                            <option value="7">Past 7 Days</option>
-                            <option value="30" selected>Past 30 Days</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" id="btn-export">Export EMR Data</button>
-                </div>
-            </header>
-
-            <!-- TAB VIEWS -->
-            
-            <!-- View 1: Overview -->
-            <div id="view-overview" style="display: flex; flex-direction: column; gap: 24px;">
-                <!-- Key Metrics -->
-                <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-title">SUPPRESSION EFFICACY</div>
-                    <div class="kpi-value" id="val-efficacy">78.1%</div>
-                    <div class="kpi-trend positive">+2.4% vs last period</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-title">DOMINANT FREQUENCY</div>
-                    <div class="kpi-value" id="val-freq">6.0 Hz</div>
-                    <div class="kpi-trend stable">Stable (Parkinsonian)</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-title">DAILY ADHERENCE</div>
-                    <div class="kpi-value" id="val-hours">7.0 hrs</div>
-                    <div class="kpi-trend negative">-0.5 hrs vs target</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-title">AVG INTERVENTION TIME</div>
-                    <div class="kpi-value" id="val-reaction">240 ms</div>
-                    <div class="kpi-trend positive">Optimized</div>
-                </div>
-            </div>
-
-            <!-- Charts Section -->
-            <div class="charts-container">
-                <!-- Efficacy Tracking -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2>Tremor Suppression Efficacy & Frequency Trends</h2>
-                        <div class="chart-controls">
-                            <button class="btn-toggle active" id="toggle-meds">Toggle Medication Overlay</button>
-                        </div>
-                    </div>
-                    <div class="chart-legend">
-                        <span class="legend-item"><span class="color-box" style="background:#ff4a4a;"></span> Raw Tremor Amplitude</span>
-                        <span class="legend-item"><span class="color-box" style="background:#00e57c;"></span> Suppressed</span>
-                        <span class="legend-item"><span class="color-box" style="background:#00ffff;"></span> Dominant Freq (Hz)</span>
-                    </div>
-                    <div style="height: 300px; width: 100%;">
-                        <canvas id="efficacyChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Event Context Tracking -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2>Tremor Trigger Events by Time of Day</h2>
-                    </div>
-                 <div class="chart-legend">
-                        <span class="legend-item"><span class="color-box" style="background:#ffb03a;"></span> Morning</span>
-                        <span class="legend-item"><span class="color-box" style="background:#3a82ff;"></span> Afternoon</span>
-                        <span class="legend-item"><span class="color-box" style="background:#a55eea;"></span> Evening</span>
-                    </div>
-                    <div style="height: 250px; width: 100%;">
-                        <canvas id="eventsChart"></canvas>
-                    </div>
-                </div>
-            </div> <!-- End View 1 -->
-
-            <!-- View 2: Device Tuning -->
-            <div id="view-tuning" style="display: none;">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2>Remote Hardware Tuning</h2>
-                    </div>
-                    <div style="margin-top: 20px; color: var(--text-secondary); max-width: 500px;">
-                        <div style="margin-bottom: 20px;">
-                            <label style="display: block; margin-bottom: 8px;">Tremor Sensitivity Threshold (%)</label>
-                            <input type="range" id="tune-sens" min="0" max="100" style="width: 100%;">
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <label style="display: block; margin-bottom: 8px;">Max Pneumatic Pressure (mmHg)</label>
-                            <input type="number" id="tune-pres" style="width: 100%; padding: 8px; background: #222; border: 1px solid #333; color: white; border-radius: 4px;">
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <label style="display: flex; align-items: center; gap: 10px;">
-                                <input type="checkbox" id="tune-haptic"> Enable Haptic Feedback Alerts
-                            </label>
-                        </div>
-                        <button id="btn-save-tune" class="btn btn-primary" style="margin-top: 10px;">Push Update to Sleeve</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- View 3: Logs -->
-            <div id="view-logs" style="display: none;">
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2>Medication Adherence Logs</h2>
-                    </div>
-                    <p style="margin-top: 10px; color: var(--text-secondary);">This is a skeleton view. Let's discuss what specific formatting doctors prefer for pharmaceutical compliance logs.</p>
-                </div>
-            </div>
-
-        </main>
+        </div>
     </div>
-    
-    <!-- External Backend Logic Simulator -->
-    <script src="app.js"></script>
+
+    <!-- Login Modal Provider -->
+    <div class="modal-overlay" id="clinicalModal">
+        <div class="login-modal">
+            <button class="close-btn" id="btnCloseModal"><i class="ph ph-x"></i></button>
+            <h3><i class="ph ph-shield-check" style="color: var(--accent-clinical);"></i> Provider Login</h3>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Secure B2B Medical Portal</p>
+            
+            <form id="clinicalLoginForm">
+                <div class="input-group">
+                    <label>Provider ID / Email</label>
+                    <input type="text" id="providerId" value="dr.smith@auraclinic.io" required>
+                </div>
+                <div class="input-group">
+                    <label>Password / Pin</label>
+                    <input type="password" id="providerPass" value="123456" required>
+                </div>
+                <button type="submit" class="btn-submit">Authenticate</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const btnClinician = document.getElementById('btnClinician');
+        const clinicalModal = document.getElementById('clinicalModal');
+        const btnCloseModal = document.getElementById('btnCloseModal');
+        const clinicalLoginForm = document.getElementById('clinicalLoginForm');
+
+        btnClinician.addEventListener('click', () => {
+            clinicalModal.classList.add('active');
+        });
+
+        btnCloseModal.addEventListener('click', () => {
+            clinicalModal.classList.remove('active');
+        });
+
+        clinicalModal.addEventListener('click', (e) => {
+            if (e.target === clinicalModal) clinicalModal.classList.remove('active');
+        });
+
+        clinicalLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            // Simulate Authentication Delay
+            const btn = clinicalLoginForm.querySelector('button');
+            btn.textContent = "Verifying...";
+            btn.style.opacity = "0.7";
+            
+            setTimeout(() => {
+                // Redirect to Clinician Multi-Patient View
+                window.location.href = "clinician_portal.html";
+            }, 800);
+        });
+    </script>
 </body>
 </html>

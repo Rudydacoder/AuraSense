@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura-Insights Clinician Portal</title>
+    <link href="https://unpkg.com/@phosphor-icons/web" rel="stylesheet">
+    <style>
+        /* Re-use clinical styles */
+        :root {
+            --bg-main: #F3F4F6;
+            --bg-card: #FFFFFF;
+            --primary: #059669; /* Emerald 600 */
+            --alert: #DC2626; /* Red 600 */
+            --warning: #D97706; /* Amber 600 */
+            --neutral: #6B7280; /* Gray 500 */
+            --text-main: #111827; /* Gray 900 */
+            --text-sub: #4B5563; /* Gray 600 */
+            --border: #E5E7EB;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        h1, h2, h3 { margin: 0; color: var(--text-main); }
+        a { text-decoration: none; color: inherit; }
+
+        /* Top Nav */
+        .top-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-card); border-bottom: 1px solid var(--border);
+            padding: 16px 24px; position: sticky; top: 0; z-index: 100;
+        }
+        .nav-left { display: flex; align-items: baseline; gap: 16px; }
+        .logo { font-size: 20px; font-weight: 700; color: var(--primary); }
+        .provider-id { color: var(--neutral); font-size: 14px; font-weight: 600; }
+
+        .btn-logout {
+            background: white; border: 1px solid var(--border);
+            padding: 8px 14px; border-radius: 6px; cursor: pointer; color: var(--text-main);
+            display: flex; align-items: center; gap: 6px; font-weight: 500;
+        }
+        .btn-logout:hover { background: #F9FAFB; }
+
+        /* Main Container */
+        .portal-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .header-row {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 24px;
+        }
+        .header-row h1 { font-size: 28px; }
+        
+        .search-box {
+            display: flex; align-items: center; gap: 8px;
+            background: white; border: 1px solid var(--border);
+            padding: 8px 16px; border-radius: 8px; width: 300px;
+        }
+        .search-box input {
+            border: none; outline: none; width: 100%; font-size: 14px;
+        }
+
+        /* Patient Grid */
+        .patient-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .patient-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; flex-direction: column;
+        }
+        .patient-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-color: var(--primary);
+        }
+
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .pid { font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .status-badge {
+            font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;
+        }
+        .status-badge.alert { background: #FEE2E2; color: #991B1B; } /* Red */
+        .status-badge.stable { background: #D1FAE5; color: #065F46; } /* Green */
+        .status-badge.review { background: #FEF3C7; color: #92400E; } /* Amber */
+
+        .card-body {
+            display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;
+        }
+        .data-row {
+            display: flex; justify-content: space-between;
+            font-size: 14px; color: var(--text-sub);
+        }
+        .data-row strong { color: var(--text-main); }
+
+        .btn-view {
+            background: var(--primary); color: white;
+            border: none; border-radius: 6px; padding: 10px; font-weight: 600;
+            text-align: center; width: 100%; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn-view:hover { background: #047857; }
+
+    </style>
+</head>
+<body>
+
+    <header class="top-nav">
+        <div class="nav-left">
+            <div class="logo">Aura-Insights</div>
+            <div class="provider-id">Dr. Smith | Neurology Dept</div>
+        </div>
+        <div>
+            <a href="index.html" class="btn-logout"><i class="ph ph-sign-out"></i> Secure Logout</a>
+        </div>
+    </header>
+
+    <main class="portal-container">
+        <div class="header-row">
+            <div>
+                <h1>Active Patients</h1>
+                <p style="color: var(--text-sub); margin-top: 8px;">Select a patient to view real-time data and longitudinal clinical history.</p>
+            </div>
+            <div class="search-box">
+                <i class="ph ph-magnifying-glass" style="color: var(--neutral)"></i>
+                <input type="text" placeholder="Search Patient ID...">
+            </div>
+        </div>
+
+        <div class="patient-grid">
+            
+            <!-- Target Patient 402 -->
+            <a href="clinical_dashboard.html" class="patient-card">
+                <div class="card-header">
+                    <div class="pid">Patient #402</div>
+                    <div class="status-badge alert">High Tremor Burden</div>
+                </div>
+                <div class="card-body">
+                    <div class="data-row"><span>Device ID:</span> <strong>AURA-88X2</strong></div>
+                    <div class="data-row"><span>Last Sync:</span> <strong>Live (Connected)</strong></div>
+                    <div class="data-row"><span>Avg Severity:</span> <strong style="color: var(--alert);">8.2 / 10</strong></div>
+                </div>
+                <button class="btn-view" tabindex="-1">View Clinical Dashboard <i class="ph ph-arrow-right"></i></button>
+            </a>
+
+            <!-- Mock Patient 1 -->
+            <a href="clinical_dashboard.html" class="patient-card">
+                <div class="card-header">
+                    <div class="pid">Patient #118</div>
+                    <div class="status-badge stable">Stable</div>
+                </div>
+                <div class="card-body">
+                    <div class="data-row"><span>Device ID:</span> <strong>AURA-12Z9</strong></div>
+                    <div class="data-row"><span>Last Sync:</span> <strong>2 hours ago</strong></div>
+                    <div class="data-row"><span>Avg Severity:</span> <strong style="color: var(--primary);">2.4 / 10</strong></div>
+                </div>
+                <button class="btn-view" tabindex="-1">View Clinical Dashboard <i class="ph ph-arrow-right"></i></button>
+            </a>
+
+            <!-- Mock Patient 2 -->
+            <a href="clinical_dashboard.html" class="patient-card">
+                <div class="card-header">
+                    <div class="pid">Patient #592</div>
+                    <div class="status-badge review">Review Meds</div>
+                </div>
+                <div class="card-body">
+                    <div class="data-row"><span>Device ID:</span> <strong>AURA-44B1</strong></div>
+                    <div class="data-row"><span>Last Sync:</span> <strong>Yesterday</strong></div>
+                    <div class="data-row"><span>Avg Severity:</span> <strong style="color: var(--warning);">5.1 / 10</strong></div>
+                </div>
+                <button class="btn-view" tabindex="-1">View Clinical Dashboard <i class="ph ph-arrow-right"></i></button>
+            </a>
+
+        </div>
+    </main>
+
+</body>
+</html>
