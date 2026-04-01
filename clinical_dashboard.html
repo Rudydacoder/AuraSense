@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura-Insights Clinical Dashboard</title>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://unpkg.com/@phosphor-icons/web" rel="stylesheet">
+    <link rel="stylesheet" href="clinical_dashboard.css">
+</head>
+<body>
+
+    <!-- Privacy Blur Overlay -->
+    <div id="privacyOverlay" class="privacy-blur hidden">
+        <div class="privacy-modal">
+            <i class="ph ph-lock-key" style="font-size: 48px; color: #6B7280; margin-bottom: 16px;"></i>
+            <h2>Session Locked</h2>
+            <p>Screen blurred due to inactivity to protect patient privacy.</p>
+            <button id="btnResumeSession" class="btn-primary">Resume Session</button>
+        </div>
+    </div>
+
+    <!-- Top Navigation -->
+    <header class="top-nav">
+        <div class="nav-left">
+            <div class="logo">Aura-Insights</div>
+            <div class="patient-id">Patient #402</div>
+        </div>
+        <div class="nav-right">
+            <button id="btnExport" class="btn-secondary"><i class="ph ph-file-pdf"></i> Generate Report</button>
+            <button id="btnSettings" class="btn-icon"><i class="ph ph-gear"></i></button>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        
+        <!-- Epic 1: Live Clinic Mode -->
+        <section class="panel live-clinic">
+            <div class="panel-header">
+                <h2>Live Clinic Mode</h2>
+                <div class="connection-status">
+                    <button id="btnSerialConnect" class="btn-connect disconnected">
+                        <i class="ph ph-plug"></i> <span id="lblSerialConnect">Connect Aura-Sleeve</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="live-grid">
+                <!-- Oscilloscope -->
+                <div class="card oscilloscope-card">
+                    <div class="card-title-row">
+                        <h3>Real-time Waveform</h3>
+                        <button id="btnFreeze" class="btn-small">Freeze</button>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="oscilloscope" width="800" height="200"></canvas>
+                        <div class="legend">
+                            <span class="legend-item"><span class="color-box red"></span> Piezo (Amplitude)</span>
+                            <span class="legend-item"><span class="color-box blue"></span> IMU (Jitter)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FFT Analysis -->
+                <div class="card fft-card">
+                    <h3>Frequency Analysis</h3>
+                    <div class="fft-result">
+                        <div class="big-number" id="lblDominantFreq">-- Hz</div>
+                        <div class="classification-badge" id="lblClassification">Awaiting Data</div>
+                        <div class="confidence">Peak clarity: <span id="lblConfidence">--%</span></div>
+                    </div>
+                    <canvas id="fftChart" width="300" height="100"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Epic 2: Longitudinal History -->
+        <section class="panel history-panel">
+            <div class="panel-header">
+                <h2>Longitudinal History</h2>
+                <div class="date-controls">
+                    <button class="btn-tab active">30 Days</button>
+                    <button class="btn-tab">90 Days</button>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggleMeds">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Show Meds</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="history-grid">
+                <!-- Weekly / Monthly Heatmap -->
+                <div class="card heatmap-card">
+                    <h3>Tremor Event Heat-Map</h3>
+                    <div class="heatmap-container" id="heatmapContainer">
+                        <!-- JS injected heatmap -->
+                    </div>
+                    <div class="heatmap-legend">
+                        <span>Low</span>
+                        <div class="heatmap-cell val-0"></div>
+                        <div class="heatmap-cell val-1"></div>
+                        <div class="heatmap-cell val-2"></div>
+                        <div class="heatmap-cell val-3"></div>
+                        <span>High</span>
+                    </div>
+                </div>
+
+                <!-- Daily Aggregation Chart -->
+                <div class="card chart-card">
+                    <h3>Daily Tremor Time (Hours)</h3>
+                    <canvas id="dailyChart" height="80"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Epic 3: Alerts & Summary -->
+        <section class="panel alerts-panel">
+            <div class="panel-header">
+                <h2>Clinical Alerts <span class="badge red">2</span></h2>
+            </div>
+            <div class="alerts-list">
+                <div class="alert-item high-severity">
+                    <div class="alert-icon"><i class="ph-fill ph-warning-circle"></i></div>
+                    <div class="alert-content">
+                        <strong>April 1st, 2026</strong> - Total tremor time exceeded 4 hours. Avg Intensity: 8.2/10.
+                    </div>
+                    <button class="btn-small">Schedule Follow-up</button>
+                </div>
+                <div class="alert-item moderate">
+                    <div class="alert-icon"><i class="ph-fill ph-info"></i></div>
+                    <div class="alert-content">
+                        <strong>March 28th, 2026</strong> - 15+ events recorded in 24h period.
+                    </div>
+                    <button class="btn-small">Review</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="clinical_dashboard.js"></script>
+</body>
+</html>
