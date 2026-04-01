@@ -1,0 +1,10 @@
+:root {
+    --bg-dark: #0f172a;
+    --bg-panel: #1e293b;
+    --text-main: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-patient: #059669;    /* Green */
+    --accent-clinician: #0EA5E9;  /* Blue */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}

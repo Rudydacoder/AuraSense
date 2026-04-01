@@ -3,263 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AuraSense Gateway</title>
+    <title>AuraSense Portal Login</title>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="shared/css/variables.css">
     <style>
-        :root {
-            --bg-dark: #0f172a;
-            --bg-panel: #1e293b;
-            --text-main: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent: #14B8A6; /* Patient Theme */
-            --accent-clinical: #059669; /* Clinic Theme */
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.08);
+        body { 
+            margin: 0; 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: var(--font-family); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
         }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-dark);
+        .header { 
+            text-align: center; 
+            margin-bottom: 40px; 
+        }
+        .header h1 { 
+            font-size: 32px; 
+            margin: 0 0 10px 0; 
+        }
+        .header p { 
+            color: var(--text-secondary); 
+            margin: 0; 
+            font-size: 16px;
+        }
+        .cards { 
+            display: flex; 
+            gap: 24px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+        }
+        .card { 
+            background: var(--bg-panel); 
+            border: 1px solid var(--border-subtle); 
+            border-radius: 16px; 
+            padding: 40px 24px; 
+            min-width: 200px; 
+            min-height: 150px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease; 
+            text-align: center; 
+        }
+        .card:hover { 
+            transform: scale(0.98); 
+            background: rgba(30, 41, 59, 0.9); 
+        }
+        .card.patient:hover { 
+            border-color: var(--accent-patient); 
+        }
+        .card.clinician:hover { 
+            border-color: var(--accent-clinician); 
+        }
+        .card i { 
+            font-size: 48px; 
+            margin-bottom: 16px; 
+        }
+        .card.patient i { 
+            color: var(--accent-patient); 
+        }
+        .card.clinician i { 
+            color: var(--accent-clinician); 
+        }
+        .card h3 { 
+            margin: 0 0 8px 0; 
+            font-size: 20px; 
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 60%);
         }
-
-        .gateway-container {
-            width: 100%;
-            max-width: 800px;
-            padding: 24px;
-            text-align: center;
-        }
-
-        .logo-wrap {
-            margin-bottom: 40px;
-        }
-        .logo-wrap h1 {
-            font-size: 36px;
-            margin: 0 0 8px 0;
-            letter-spacing: -0.5px;
-        }
-        .logo-wrap p {
-            color: var(--text-secondary);
-            font-size: 18px;
-            margin: 0;
-        }
-
-        .role-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-        
-        @media (max-width: 600px) {
-            .role-grid { grid-template-columns: 1fr; }
-        }
-
-        .role-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 40px 24px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(12px);
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .role-card:hover {
-            transform: translateY(-4px);
-            background: rgba(45, 55, 72, 0.9);
-        }
-
-        .role-card.patient:hover { border-color: var(--accent); }
-        .role-card.clinician:hover { border-color: var(--accent-clinical); }
-
-        .role-icon {
-            font-size: 64px;
-            margin-bottom: 24px;
-        }
-        .role-card.patient .role-icon { color: var(--accent); }
-        .role-card.clinician .role-icon { color: var(--accent-clinical); }
-
-        .role-card h2 {
-            margin: 0 0 12px 0;
-            font-size: 24px;
-        }
-        .role-card p {
-            margin: 0;
-            color: var(--text-secondary);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        /* Clinician Login Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .login-modal {
-            background: var(--bg-panel);
-            padding: 32px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid var(--glass-border);
-            position: relative;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 16px; right: 16px;
-            background: none; border: none;
-            color: var(--text-secondary);
-            font-size: 24px; cursor: pointer;
-        }
-
-        .login-modal h3 {
-            margin-top: 0;
-            color: white;
-            display: flex; align-items: center; gap: 8px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--glass-border);
-            background: rgba(0,0,0,0.2);
-            color: white;
-            font-size: 16px;
-        }
-        .input-group input:focus {
-            outline: none;
-            border-color: var(--accent-clinical);
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent-clinical);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn-submit:hover {
-            background: #047857;
+        .card p { 
+            margin: 0; 
+            color: var(--text-secondary); 
+            font-size: 14px; 
         }
     </style>
 </head>
 <body>
-
-    <div class="gateway-container">
-        <div class="logo-wrap">
-            <h1>AuraSense Platform</h1>
-            <p>Select your portal access</p>
+    <div class="header">
+        <h1>AuraSense System</h1>
+        <p>Unified Portal Access</p>
+    </div>
+    
+    <div class="cards">
+        <div class="card patient" onclick="enterPortal('patient')" role="button" tabindex="0">
+            <i class="ph ph-user"></i>
+            <h3>Patient Portal</h3>
+            <p>Access your sleeve data</p>
         </div>
-
-        <div class="role-grid">
-            <!-- Patient Route -->
-            <a href="web.html" class="role-card patient">
-                <i class="ph ph-user role-icon"></i>
-                <h2>I am a Patient</h2>
-                <p>Login to your personal Aura-Sleeve dashboard to set up your device, track your own symptoms, and view logs.</p>
-            </a>
-
-            <!-- Clinician Route -->
-            <div class="role-card clinician" id="btnClinician">
-                <i class="ph ph-stethoscope role-icon"></i>
-                <h2>I am a Clinician</h2>
-                <p>Login with your provider ID to securely monitor your patients, review historical heat-maps, and tune hardware.</p>
-            </div>
+        
+        <div class="card clinician" onclick="enterPortal('clinician')" role="button" tabindex="0">
+            <i class="ph ph-file-pulse"></i>
+            <h3>Clinician Portal</h3>
+            <p>Real-time monitoring</p>
         </div>
     </div>
 
-    <!-- Login Modal Provider -->
-    <div class="modal-overlay" id="clinicalModal">
-        <div class="login-modal">
-            <button class="close-btn" id="btnCloseModal"><i class="ph ph-x"></i></button>
-            <h3><i class="ph ph-shield-check" style="color: var(--accent-clinical);"></i> Provider Login</h3>
-            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Secure B2B Medical Portal</p>
-            
-            <form id="clinicalLoginForm">
-                <div class="input-group">
-                    <label>Provider ID / Email</label>
-                    <input type="text" id="providerId" value="dr.smith@auraclinic.io" required>
-                </div>
-                <div class="input-group">
-                    <label>Password / Pin</label>
-                    <input type="password" id="providerPass" value="123456" required>
-                </div>
-                <button type="submit" class="btn-submit">Authenticate</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        const btnClinician = document.getElementById('btnClinician');
-        const clinicalModal = document.getElementById('clinicalModal');
-        const btnCloseModal = document.getElementById('btnCloseModal');
-        const clinicalLoginForm = document.getElementById('clinicalLoginForm');
-
-        btnClinician.addEventListener('click', () => {
-            clinicalModal.classList.add('active');
-        });
-
-        btnCloseModal.addEventListener('click', () => {
-            clinicalModal.classList.remove('active');
-        });
-
-        clinicalModal.addEventListener('click', (e) => {
-            if (e.target === clinicalModal) clinicalModal.classList.remove('active');
-        });
-
-        clinicalLoginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            // Simulate Authentication Delay
-            const btn = clinicalLoginForm.querySelector('button');
-            btn.textContent = "Verifying...";
-            btn.style.opacity = "0.7";
-            
-            setTimeout(() => {
-                // Redirect to Clinician Multi-Patient View
-                window.location.href = "clinician_portal.html";
-            }, 800);
-        });
-    </script>
+    <!-- Auth routing -->
+    <script src="shared/js/auth.js"></script>
 </body>
 </html>
