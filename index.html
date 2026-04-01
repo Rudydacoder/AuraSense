@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Portal - Aura-Sleeve</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                <span>AURA<span style="color: #666;">CLINIC</span></span>
+            </div>
+            
+            <nav class="nav-links">
+                <a href="#" class="nav-link active" data-target="overview">Patient Overview</a>
+                <a href="#" class="nav-link" data-target="tuning">Device Tuning</a>
+                <a href="#" class="nav-link" data-target="logs">Medication Logs</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div>
+                    <h1 class="page-title">Neuro-Orthosis Monitoring</h1>
+                    <p class="subtitle">Patient: John Doe | Device ID: AURA-88X2</p>
+                </div>
+                <div class="header-actions">
+                    <div class="period-selector">
+                        <label for="period">Monitoring Period</label>
+                        <select id="period">
+                            <option value="1">Past 24 Hours</option>
+                            <option value="7">Past 7 Days</option>
+                            <option value="30" selected>Past 30 Days</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="btn-export">Export EMR Data</button>
+                </div>
+            </header>
+
+            <!-- TAB VIEWS -->
+            
+            <!-- View 1: Overview -->
+            <div id="view-overview" style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Key Metrics -->
+                <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">SUPPRESSION EFFICACY</div>
+                    <div class="kpi-value" id="val-efficacy">78.1%</div>
+                    <div class="kpi-trend positive">+2.4% vs last period</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">DOMINANT FREQUENCY</div>
+                    <div class="kpi-value" id="val-freq">6.0 Hz</div>
+                    <div class="kpi-trend stable">Stable (Parkinsonian)</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">DAILY ADHERENCE</div>
+                    <div class="kpi-value" id="val-hours">7.0 hrs</div>
+                    <div class="kpi-trend negative">-0.5 hrs vs target</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">AVG INTERVENTION TIME</div>
+                    <div class="kpi-value" id="val-reaction">240 ms</div>
+                    <div class="kpi-trend positive">Optimized</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-container">
+                <!-- Efficacy Tracking -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2>Tremor Suppression Efficacy & Frequency Trends</h2>
+                        <div class="chart-controls">
+                            <button class="btn-toggle active" id="toggle-meds">Toggle Medication Overlay</button>
+                        </div>
+                    </div>
+                    <div class="chart-legend">
+                        <span class="legend-item"><span class="color-box" style="background:#ff4a4a;"></span> Raw Tremor Amplitude</span>
+                        <span class="legend-item"><span class="color-box" style="background:#00e57c;"></span> Suppressed</span>
+                        <span class="legend-item"><span class="color-box" style="background:#00ffff;"></span> Dominant Freq (Hz)</span>
+                    </div>
+                    <div style="height: 300px; width: 100%;">
+                        <canvas id="efficacyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Event Context Tracking -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2>Tremor Trigger Events by Time of Day</h2>
+                    </div>
+                 <div class="chart-legend">
+                        <span class="legend-item"><span class="color-box" style="background:#ffb03a;"></span> Morning</span>
+                        <span class="legend-item"><span class="color-box" style="background:#3a82ff;"></span> Afternoon</span>
+                        <span class="legend-item"><span class="color-box" style="background:#a55eea;"></span> Evening</span>
+                    </div>
+                    <div style="height: 250px; width: 100%;">
+                        <canvas id="eventsChart"></canvas>
+                    </div>
+                </div>
+            </div> <!-- End View 1 -->
+
+            <!-- View 2: Device Tuning -->
+            <div id="view-tuning" style="display: none;">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2>Remote Hardware Tuning</h2>
+                    </div>
+                    <div style="margin-top: 20px; color: var(--text-secondary); max-width: 500px;">
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px;">Tremor Sensitivity Threshold (%)</label>
+                            <input type="range" id="tune-sens" min="0" max="100" style="width: 100%;">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px;">Max Pneumatic Pressure (mmHg)</label>
+                            <input type="number" id="tune-pres" style="width: 100%; padding: 8px; background: #222; border: 1px solid #333; color: white; border-radius: 4px;">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="tune-haptic"> Enable Haptic Feedback Alerts
+                            </label>
+                        </div>
+                        <button id="btn-save-tune" class="btn btn-primary" style="margin-top: 10px;">Push Update to Sleeve</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 3: Logs -->
+            <div id="view-logs" style="display: none;">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2>Medication Adherence Logs</h2>
+                    </div>
+                    <p style="margin-top: 10px; color: var(--text-secondary);">This is a skeleton view. Let's discuss what specific formatting doctors prefer for pharmaceutical compliance logs.</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+    
+    <!-- External Backend Logic Simulator -->
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>My Sleeve</title>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="patient_app.css">
+</head>
+<body>
+
+    <!-- Context Task / Smart Toast -->
+    <div class="glass smart-toast" id="smartToast">
+        <span class="toast-msg">Tremor detected. What happened?</span>
+        <div class="toast-opts">
+            <button class="toast-btn">☕</button>
+            <button class="toast-btn">😰</button>
+            <button class="toast-btn">🚶</button>
+        </div>
+    </div>
+
+    <!-- SVG Definitions for Gradients -->
+    <svg style="width:0;height:0;position:absolute;" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="emerald-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#10B981" />
+          <stop offset="100%" stop-color="#14B8A6" />
+        </linearGradient>
+        <linearGradient id="spark-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#8B5CF6" stop-opacity="1" />
+          <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <!-- Global Emergency Bottom Sheet -->
+    <div class="safety-wrapper">
+        <button id="btnSafety" class="btn-safety">
+            <div class="btn-safety-fill" id="btnSafetyFill"></div>
+            <div class="btn-safety-content">
+                <i class="ph ph-shield-check" id="btnSafetyIcon"></i>
+                <span id="btnSafetyText">Hold to Release Pressure</span>
+            </div>
+        </button>
+    </div>
+
+    <!-- Floating Nav Pill -->
+    <div class="nav-wrapper">
+        <nav class="nav-pill">
+            <button class="nav-item active" data-target="view-dashboard">
+                <i class="ph-fill ph-house"></i>
+                <span class="nav-label">Home</span>
+            </button>
+            <button class="nav-item" data-target="view-logs">
+                <i class="ph ph-squares-four"></i>
+                <span class="nav-label">Logs</span>
+            </button>
+            <button class="nav-item" data-target="view-stats">
+                <i class="ph ph-chart-donut"></i>
+                <span class="nav-label">Activity</span>
+            </button>
+            <button class="nav-item" data-target="view-lab">
+                <i class="ph ph-flask"></i>
+                <span class="nav-label">Lab</span>
+            </button>
+        </nav>
+    </div>
+
+    <main class="app-container" id="mainContainer">
+        
+        <!-- Pull to search hint -->
+        <div class="pull-indicator">Pull down to scan</div>
+
+        <section id="view-dashboard" class="view active">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1 style="margin: 0;">My Sleeve</h1>
+                <i class="ph ph-user-circle" id="btnUserProfile" style="font-size: 32px; color: var(--text-secondary); cursor: pointer; transition: color 0.2s;"></i>
+            </div>
+            <p class="subtitle">Tuesday, April 1</p>
+
+            <!-- Hero Section -->
+            <div class="hero-section">
+                
+                <!-- Abstract 3D placeholder (Soft SVG Blob) -->
+                <svg viewBox="0 0 200 200" class="abstract-mesh">
+                    <path fill="#14B8A6" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.3,-46.5C90.8,-33.9,96.8,-17,95.3,-1.3C93.7,14.4,84.5,28.8,74.5,41.9C64.5,55,53.6,66.8,40.5,74.7C27.4,82.5,13.7,86.5,-0.6,87.4C-14.8,88.4,-29.7,86.3,-42.6,79.5C-55.5,72.7,-66.4,61.1,-75.4,47.8C-84.4,34.5,-91.5,19.3,-92.4,3.7C-93.3,-12,-88,-28.3,-79,-41.8C-70,-55.3,-57.4,-66.1,-43.3,-73.4C-29.2,-80.7,-14.6,-84.5,0.7,-85.7C16,-86.9,30.4,-83.5,44.7,-76.4Z" transform="translate(100 100)" />
+                </svg>
+
+                <div class="ring-wrapper">
+                    <svg viewBox="0 0 180 180" class="progress-ring">
+                        <circle cx="90" cy="90" r="85" class="ring-bg"></circle>
+                        <circle cx="90" cy="90" r="85" class="ring-fill" id="suppressionRing"></circle>
+                    </svg>
+                    
+                    <div style="text-align: center; position: absolute; top:50%; transform:translateY(-50%); width: 140px; margin-top: -16px;">
+                        <div class="hero-number" id="lblHours">2h 14m</div>
+                        <div class="label">Suppression Time</div>
+                    </div>
+
+                    <button class="btn-connect disconnected" id="btnConnect">
+                        <i class="ph ph-bluetooth"></i> <span id="lblConnect">Connect</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status Glass Card -->
+            <div class="glass status-card">
+                <div class="status-left">
+                    <div class="status-indicator">
+                        <div class="dot" id="dotStatus"></div>
+                        <span class="status-text offline" id="lblStatus">Offline</span>
+                    </div>
+                    <div class="last-synced" id="lblBattery">Last known: 85%</div>
+                </div>
+                
+                <div class="sparkline-container">
+                    <svg viewBox="0 0 100 40" class="sparkline-svg">
+                        <path d="M0,40 L0,20 Q10,15 20,25 T40,10 T60,15 T80,5 L100,20 L100,40 Z" class="sparkline-fill"/>
+                        <path d="M0,20 Q10,15 20,25 T40,10 T60,15 T80,5 L100,20" class="sparkline-path"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="label" style="margin-bottom: 12px;">Quick Logs</div>
+            <!-- Quick Actions Grid -->
+            <div class="quick-actions">
+                <button class="action-card bg-meds" data-tag="medication">
+                    <i class="ph ph-pill" style="font-size: 28px;"></i>
+                    <span>Medication</span>
+                </button>
+                <button class="action-card bg-food" data-tag="eating">
+                    <i class="ph ph-coffee" style="font-size: 28px;"></i>
+                    <span>Eating</span>
+                </button>
+                <button class="action-card bg-stress" data-tag="stress">
+                    <i class="ph ph-warning-circle" style="font-size: 28px;"></i>
+                    <span>Stress</span>
+                </button>
+                <button class="action-card bg-active" data-tag="activity">
+                    <i class="ph ph-person-simple-walk" style="font-size: 28px;"></i>
+                    <span>Active</span>
+                </button>
+            </div>
+
+        </section>
+
+        <section id="view-logs" class="view">
+            <!-- Header & Export Action -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h1 style="margin: 0;">Aura Timeline</h1>
+                <div class="fab-mini" id="btnExportLogs" aria-label="Export capabilities"><i class="ph ph-export"></i></div>
+            </div>
+
+            <!-- Hero Stats Bar -->
+            <div class="scroll-row hide-scrollbar" id="heroStatsBar">
+                <div class="stat-card glass">
+                    <div class="stat-val" id="statEvents">0</div>
+                    <div class="stat-lbl">Events <i class="ph ph-trend-down" style="color: #10B981;"></i></div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-val" id="statActiveTime">0h 0m</div>
+                    <div class="stat-lbl">Active Time</div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-val" id="statAvgSeverity" style="color: #F59E0B;">Medium</div>
+                    <div class="stat-lbl">Avg Severity <div id="statSeverityColor" style="width:8px;height:8px;border-radius:50%;background:#F59E0B;display:inline-block;margin-left:4px;"></div></div>
+                </div>
+            </div>
+
+            <!-- Date Navigator -->
+            <div class="scroll-row hide-scrollbar date-nav" style="margin-top: 24px; margin-bottom: 16px;" id="dateNavContainer">
+                <button class="date-pill active" data-date="Today">Today</button>
+                <button class="date-pill" data-date="Yesterday">Yesterday</button>
+                <button class="date-pill" data-date="Week">Week</button>
+                <button class="date-pill" data-date="Month">Month</button>
+            </div>
+
+            <!-- Context Tag Filter Bar -->
+            <div class="scroll-row hide-scrollbar filter-nav" style="margin-bottom: 32px;" id="filterNavContainer">
+                <button class="filter-pill active" data-filter="All">All</button>
+                <button class="filter-pill" data-filter="Doctor"><i class="ph-fill ph-star" style="color: #F59E0B;"></i> For Doctor (<span class="count">0</span>)</button>
+                <button class="filter-pill" data-filter="Meds"><i class="ph ph-pill"></i> Meds (<span class="count">0</span>)</button>
+                <button class="filter-pill" data-filter="Eating"><i class="ph ph-coffee"></i> Eating (<span class="count">0</span>)</button>
+                <button class="filter-pill" data-filter="Stress"><i class="ph ph-warning-circle"></i> Stress (<span class="count">0</span>)</button>
+                <button class="filter-pill" data-filter="Active"><i class="ph ph-person-simple-walk"></i> Active (<span class="count">0</span>)</button>
+                <button class="filter-pill" data-filter="Sleep"><i class="ph ph-moon-stars"></i> Sleep (<span class="count">0</span>)</button>
+            </div>
+
+            <!-- Pattern Insight (Example for Weekly/Monthly view context) -->
+            <div class="insight-card glass" id="weeklyInsight" style="display: none;">
+                <i class="ph-fill ph-lightbulb" style="color: #8B5CF6; font-size: 24px; margin-top:2px;"></i>
+                <div>
+                    <div style="font-weight: 600; font-size: 15px;">Morning patterns detected</div>
+                    <div style="font-size: 14px; color: var(--text-secondary); margin-top: 2px;">Tremors are 40% more frequent before 10 AM. Your sleeve is mitigating them effectively.</div>
+                </div>
+            </div>
+
+            <!-- Vertical Timeline Feed -->
+            <div class="timeline-container" id="timelineFeed">
+                <div class="timeline-line"></div>
+                <!-- Dynamic Content Injected Here -->
+            </div>
+            
+            <div style="height: 48px;"></div> <!-- Bottom scroll padding -->
+
+        </section>
+
+        <section id="view-stats" class="view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h1 style="margin: 0;">Daily Rings</h1>
+                <div class="fab-mini" id="btnExportReport" aria-label="Export Report"><i class="ph ph-file-plus"></i></div>
+            </div>
+            
+            <!-- Hero Rings Section -->
+            <div class="rings-hero glass">
+                <div class="rings-container">
+                    <svg viewBox="0 0 200 200" class="rings-svg">
+                        <!-- Outer Ring (Suppression) -->
+                        <circle cx="100" cy="100" r="80" class="ring-track"/>
+                        <circle cx="100" cy="100" r="80" class="ring-progress ring-outer" stroke="url(#emerald-gradient)" stroke-dasharray="502" stroke-dashoffset="502" />
+                        
+                        <!-- Middle Ring (Events) -->
+                        <circle cx="100" cy="100" r="60" class="ring-track"/>
+                        <circle cx="100" cy="100" r="60" class="ring-progress ring-middle" stroke="#0EA5E9" stroke-dasharray="376" stroke-dashoffset="376" />
+                        
+                        <!-- Inner Ring (Wear Time) -->
+                        <circle cx="100" cy="100" r="40" class="ring-track"/>
+                        <circle cx="100" cy="100" r="40" class="ring-progress ring-inner" stroke="#F59E0B" stroke-dasharray="251" stroke-dashoffset="251" />
+                    </svg>
+                    <div class="rings-center-text">
+                        <div class="hero-number" style="font-size: 28px; margin-bottom: 0;">1h 24m</div>
+                        <div class="label" style="font-size: 10px;">2H GOAL</div>
+                    </div>
+                </div>
+                <div class="rings-legend">
+                    <div class="legend-item"><span class="dot" style="background:#10B981;"></span> Suppression</div>
+                    <div class="legend-item"><span class="dot" style="background:#0EA5E9;"></span> Events</div>
+                    <div class="legend-item"><span class="dot" style="background:#F59E0B;"></span> Efficiency</div>
+                </div>
+            </div>
+
+            <!-- Pattern Insights Carousel -->
+            <div class="label" style="margin-top: 32px; margin-bottom: 12px;">What We're Noticing</div>
+            <div class="scroll-row hide-scrollbar">
+                <div class="insight-card-smart glass">
+                    <div class="insight-icon bg-amber-soft"><i class="ph-fill ph-lightbulb" style="color: #B45309;"></i></div>
+                    <div class="insight-content">
+                        <div class="insight-title">Morning Frequency</div>
+                        <div class="insight-desc">Tremors are 40% more frequent before 10 AM today.</div>
+                    </div>
+                </div>
+                <div class="insight-card-smart glass">
+                    <div class="insight-icon bg-green-soft"><i class="ph-fill ph-hands-clapping" style="color: #047857;"></i></div>
+                    <div class="insight-content">
+                        <div class="insight-title">Great Progress!</div>
+                        <div class="insight-desc">You have had 3 tremor-free days this week.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Trend Chart -->
+            <div class="label" style="margin-top: 24px; margin-bottom: 12px;">Aura Pattern</div>
+            <div class="glass weekly-chart-card">
+                <div class="chart-bars">
+                    <!-- Mon -->
+                    <div class="bar-col">
+                        <div class="bar-stack"><div class="seg-gray" style="height:20%"></div><div class="seg-amber" style="height:30%"></div><div class="seg-green" style="height:50%"></div></div>
+                        <div class="day-lbl">M</div>
+                    </div>
+                    <!-- Tue -->
+                    <div class="bar-col">
+                        <div class="bar-stack"><div class="seg-gray" style="height:10%"></div><div class="seg-amber" style="height:40%"></div><div class="seg-green" style="height:50%"></div></div>
+                        <div class="day-lbl">T</div>
+                    </div>
+                    <!-- Wed -->
+                    <div class="bar-col">
+                        <div class="bar-stack"><div class="seg-amber" style="height:20%"></div><div class="seg-green" style="height:80%"></div></div>
+                        <div class="day-lbl">W</div>
+                    </div>
+                    <!-- Thu -->
+                    <div class="bar-col">
+                        <div class="bar-stack"><div class="seg-gray" style="height:30%"></div><div class="seg-amber" style="height:10%"></div><div class="seg-green" style="height:60%"></div></div>
+                        <div class="day-lbl">T</div>
+                    </div>
+                    <!-- Fri -->
+                    <div class="bar-col">
+                        <div class="bar-stack"><div class="seg-gray" style="height:5%"></div><div class="seg-amber" style="height:15%"></div><div class="seg-green" style="height:80%"></div></div>
+                        <div class="day-lbl">F</div>
+                    </div>
+                    <!-- Sat (Today Highlight) -->
+                    <div class="bar-col today">
+                        <div class="bar-stack"><div class="seg-amber" style="height:30%"></div><div class="seg-green" style="height:70%"></div></div>
+                        <div class="day-lbl" style="font-weight: 700; color: #10B981;">S</div>
+                    </div>
+                    <!-- Sun (Placeholder) -->
+                    <div class="bar-col">
+                        <div class="bar-stack"><div class="seg-gray" style="height:100%"></div></div>
+                        <div class="day-lbl">S</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid-2x2" style="margin-top: 24px;">
+                <div class="stat-box glass">
+                    <div class="sb-lbl">Total Suppression</div>
+                    <div class="sb-val counter-anim" data-target="14.2">0.0</div><span class="sb-unit">h</span>
+                    <div class="sb-sub"><i class="ph ph-trend-up" style="color:#10B981;"></i> 12% vs last week</div>
+                </div>
+                <div class="stat-box glass">
+                    <div class="sb-lbl">Avg Response</div>
+                    <div class="sb-val counter-anim" style="color:#10B981;" data-target="0.3">0.0</div><span class="sb-unit">s</span>
+                    <div class="sb-sub">Detection to stability</div>
+                </div>
+                <div class="stat-box glass">
+                    <div class="sb-lbl">Peak Intensity</div>
+                    <div class="sb-val counter-anim" style="color:#F59E0B;" data-target="8">0</div><span class="sb-unit">/10</span>
+                    <div class="sb-sub">Tuesday morning</div>
+                </div>
+                <div class="stat-box glass">
+                    <div class="sb-lbl">Top Context</div>
+                    <div class="sb-val">☕ <span style="font-size: 20px; color: var(--text-primary);">×5</span></div>
+                    <div class="sb-sub">Most logged this week</div>
+                </div>
+            </div>
+
+            <!-- Daily Goals -->
+            <div class="label" style="margin-top: 32px; margin-bottom: 12px;">Today's Targets</div>
+            <div class="glass goals-card">
+                <div class="goal-row">
+                    <div class="goal-info">
+                        <span class="g-title">Wear sleeve for 8h</span>
+                        <span class="g-status">75% complete</span>
+                    </div>
+                    <div class="goal-bar-bg"><div class="goal-bar-fill" style="width: 75%; background: var(--accent-gradient);"></div></div>
+                </div>
+                <div class="goal-row">
+                    <div class="goal-info">
+                        <span class="g-title">Tag 3 tremors</span>
+                        <span class="g-status">2/3 complete</span>
+                    </div>
+                    <div class="goal-bar-bg"><div class="goal-bar-fill" style="width: 66%; background: #0EA5E9;"></div></div>
+                </div>
+                <div class="goal-row">
+                    <div class="goal-info">
+                        <span class="g-title">Keep intensity &lt;5</span>
+                        <span class="g-status" style="color: #10B981;">Current: 4.2 <i class="ph-fill ph-check-circle"></i></span>
+                    </div>
+                    <div class="goal-bar-bg"><div class="goal-bar-fill" style="width: 100%; background: #10B981;"></div></div>
+                </div>
+            </div>
+
+            <div style="height: 48px;"></div>
+        </section>
+
+        <!-- AURA PHYSICS LAB -->
+        <section id="view-lab" class="view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h1 style="margin: 0;">Aura Physics Lab</h1>
+                <div class="fab-mini" id="btnLabInfo" aria-label="How it works"><i class="ph ph-info"></i></div>
+            </div>
+            
+            <!-- Visualization Top Half -->
+            <div class="lab-visualization">
+                <canvas id="physicsCanvas" width="800" height="800"></canvas>
+                
+                <!-- Floating Metrics -->
+                <div class="lab-metrics">
+                    <div class="lab-metric-pill">
+                        <span class="lm-val" id="valPressure">12</span>
+                        <span class="lm-lbl">mmHg</span>
+                    </div>
+                    <div class="lab-metric-pill">
+                        <span class="lm-val" id="valResponse">--</span>
+                        <span class="lm-lbl">ms</span>
+                    </div>
+                    <div class="lab-metric-pill">
+                        <span class="lm-val" id="valDampening">0</span>
+                        <span class="lm-lbl">% RED</span>
+                    </div>
+                </div>
+
+                <!-- Controls Dock -->
+                <div class="lab-controls">
+                    <button class="lab-icon-btn" id="btnToggleXray" title="Toggle X-Ray"><i class="ph ph-x-ray"></i></button>
+                    <button class="lab-primary-btn" id="btnTriggerDemo"><i class="ph-fill ph-play-circle"></i> Trigger Demo</button>
+                </div>
+                
+                <!-- Overlay Status -->
+                <div class="lab-status-overlay" id="labStatusText">Monitoring Baseline</div>
+            </div>
+
+            <!-- Context Below -->
+            <div class="lab-context-section" id="labContextSection">
+                <div class="label" style="text-align: center; margin-bottom: 16px;">What Happened?</div>
+                <div class="lab-context-grid">
+                    <button class="lab-ctx-btn"><span class="emoji">💊</span><span class="lbl">Meds</span></button>
+                    <button class="lab-ctx-btn"><span class="emoji">☕</span><span class="lbl">Eating</span></button>
+                    <button class="lab-ctx-btn"><span class="emoji">😰</span><span class="lbl">Stress</span></button>
+                    <button class="lab-ctx-btn"><span class="emoji">🚶</span><span class="lbl">Active</span></button>
+                    <button class="lab-ctx-btn"><span class="emoji">💤</span><span class="lbl">Sleep</span></button>
+                    <button class="lab-ctx-btn"><span class="emoji">🎤</span><span class="lbl">Voice</span></button>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- Detailed Event Modal Sheet -->
+    <div class="modal-overlay" id="eventModalOverlay"></div>
+    <div class="bottom-sheet" id="eventModalSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <div>
+                <h2 style="margin:0; font-size: 24px;">9:15 AM</h2>
+                <span style="color: var(--text-secondary); font-size: 14px;">Tuesday, April 1</span>
+            </div>
+            <button class="close-btn btnCloseModal"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="sheet-content">
+            <!-- Sparkline "Waveform" -->
+            <div class="glass" style="height: 100px; margin-bottom: 24px; position: relative; overflow: hidden; display:flex; align-items:center; justify-content:center; border-radius: 16px;">
+                <svg viewBox="0 -30 200 100" preserveAspectRatio="none" style="width:100%; height:100%;" aria-hidden="true">
+                    <path class="waveform-anim" d="M0,20 Q10,15 20,25 T40,10 T60,35 T80,5 T100,20 T120,5 T140,25 T160,20 T180,25 L200,20" fill="none" stroke="#F43F5E" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-item glass">
+                    <span class="lbl">Duration</span>
+                    <span class="val">3.4s</span>
+                </div>
+                <div class="stat-item glass">
+                    <span class="lbl">Peak Intensity</span>
+                    <span class="val" style="color: #F43F5E;">8/10</span>
+                </div>
+                <div class="stat-item glass">
+                    <span class="lbl">Response Delay</span>
+                    <span class="val">0.2s</span>
+                </div>
+                <div class="stat-item glass">
+                    <span class="lbl">Context Tag</span>
+                    <span class="val"><i class="ph ph-coffee" style="margin-right: 4px;"></i>Eating</span>
+                </div>
+            </div>
+            
+            <div class="action-list-modern">
+                <button class="action-row" id="btnEditContext" aria-label="Edit Context. Current context: Eating. Double-tap to change.">
+                    <i class="ph ph-tag icon-gray"></i>
+                    <span>Edit Context</span>
+                </button>
+                <div class="divider"></div>
+                <button class="action-row" id="btnMarkDoctor" aria-label="Mark for Doctor. Not flagged. Double-tap to flag for doctor review.">
+                    <i class="ph ph-star icon-gray" id="iconDoctorStar"></i>
+                    <span id="textMarkDoctor">Mark for Doctor</span>
+                </button>
+                <div class="divider"></div>
+                <button class="action-row" id="btnShareEvent" aria-label="Share Event Snapshot. Double-tap to share via email or messages.">
+                    <i class="ph ph-share-network icon-gray"></i>
+                    <span>Share Event Snapshot</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Context Modal Sheet -->
+    <div class="modal-overlay" id="editContextOverlay"></div>
+    <div class="bottom-sheet" id="editContextSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header" style="justify-content: center; position: relative;">
+            <h2 style="margin:0; font-size: 24px;">What was happening?</h2>
+            <button class="close-btn btnCloseModal" style="position: absolute; right: 16px; top: 16px;"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="sheet-content">
+            <div class="context-grid">
+                <div class="context-card" data-context="Medication" data-icon="💊" tabindex="0">
+                    <div class="emoji">💊</div><div class="lbl">Medication</div>
+                </div>
+                <div class="context-card active-ctx" data-context="Eating" data-icon="☕" tabindex="0">
+                    <div class="emoji">☕</div><div class="lbl">Eating/Drinking</div>
+                </div>
+                <div class="context-card" data-context="Stress" data-icon="😰" tabindex="0">
+                    <div class="emoji">😰</div><div class="lbl">Stress/Anxiety</div>
+                </div>
+                <div class="context-card" data-context="Active" data-icon="🚶" tabindex="0">
+                    <div class="emoji">🚶</div><div class="lbl">Active/Walking</div>
+                </div>
+                <div class="context-card" data-context="WokeUp" data-icon="💤" tabindex="0">
+                    <div class="emoji">💤</div><div class="lbl">Just Woke Up</div>
+                </div>
+                <div class="context-card" data-context="Ill" data-icon="🤒" tabindex="0">
+                    <div class="emoji">🤒</div><div class="lbl">Feeling Ill</div>
+                </div>
+                <div class="context-card" data-context="Other" data-icon="❓" tabindex="0">
+                    <div class="emoji">❓</div><div class="lbl">Other</div>
+                </div>
+                <div class="context-card" data-context="Remove" data-icon="🗑️" tabindex="0">
+                    <div class="emoji" style="filter: grayscale(1);">🗑️</div><div class="lbl">Remove Tag</div>
+                </div>
+            </div>
+            
+            <div id="voiceInputSection" style="display:none; margin-top: 24px; text-align: center;">
+                <button class="btn-voice-hold" id="btnHoldVoice">
+                    <i class="ph-fill ph-microphone"></i> Hold to Speak
+                </button>
+                <div class="voice-transcription" id="voiceResult" style="margin-top: 16px; font-size: 14px; color: var(--text-secondary);"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Options Sheet -->
+    <div class="modal-overlay" id="exportModalOverlay"></div>
+    <div class="bottom-sheet" id="exportModalSheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <h2 style="margin:0; font-size: 20px;">Medical Export</h2>
+            <button class="close-btn btnCloseModal"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="sheet-content">
+            <div class="action-list" style="margin-top: 0;">
+                <button class="list-btn" id="btnExportPDF"><i class="ph ph-file-pdf" style="color: #EF4444;"></i> Send to Doctor (PDF)</button>
+                <button class="list-btn" id="btnExportCSV"><i class="ph ph-file-csv" style="color: #10B981;"></i> Download Raw Logs (CSV)</button>
+                <button class="list-btn" id="btnExportImage"><i class="ph ph-image" style="color: #8B5CF6;"></i> Share Summary Image</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Data Sheet -->
+    <div class="modal-overlay" id="profileModalOverlay"></div>
+    <div class="bottom-sheet" id="profileModalSheet" style="max-height: 85vh;">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <h2 style="margin:0; font-size: 20px;">Patient Profile</h2>
+            <button class="close-btn btnCloseModal"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="sheet-content">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="width: 80px; height: 80px; background: rgba(20, 184, 166, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                    <i class="ph-fill ph-user" style="font-size: 40px; color: #14B8A6;"></i>
+                </div>
+                <h3 id="profNameTitle" style="margin: 0; font-size: 22px;">Loading...</h3>
+                <p id="profJoinDate" style="margin: 4px 0 0 0; color: var(--text-secondary); font-size: 14px;">Patient since --</p>
+            </div>
+            
+            <div class="action-list" style="margin-top: 0;">
+                <div class="list-btn" style="cursor: default; display: flex; flex-direction: column; align-items: flex-start;">
+                    <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Condition / Diagnosis</span>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 16px;">
+                        <i class="ph-fill ph-stethoscope" style="color: #F59E0B;"></i>
+                        <span id="profCondition">--</span>
+                    </div>
+                </div>
+
+                <div class="row" style="display: flex; gap: 12px; margin-top: 12px;">
+                    <div class="list-btn" style="cursor: default; flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
+                        <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Age</span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 16px;">
+                            <i class="ph-fill ph-calendar-blank" style="color: #3B82F6;"></i>
+                            <span id="profAge">--</span>
+                        </div>
+                    </div>
+                    <div class="list-btn" style="cursor: default; flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
+                        <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Blood Type</span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 16px;">
+                            <i class="ph-fill ph-drop" style="color: #EF4444;"></i>
+                            <span id="profBlood">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-btn" style="cursor: default; display: flex; flex-direction: column; align-items: flex-start; margin-top: 12px;">
+                    <span style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase;">Primary Physician</span>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 16px;">
+                        <i class="ph-fill ph-user-md" style="color: #10B981;"></i>
+                        <span id="profDoctor">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="btnLogout" class="btn-primary" style="width: 100%; margin-top: 24px; padding: 16px; background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; gap: 8px; align-items: center;">
+                <i class="ph-bold ph-sign-out"></i> Sign Out
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="patient_app.js"></script>
+</body>
+</html>

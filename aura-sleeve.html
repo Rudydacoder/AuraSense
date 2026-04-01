@@ -1,0 +1,949 @@
+gi<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Aura-Sleeve — 3D Simulation</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0e1219;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#f8fafc;}
+#c{display:block;width:100vw;height:100vh;}
+#ui{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+.panel{
+  position:absolute;background:rgba(20, 27, 40, 0.75);
+  border:1px solid rgba(255, 255, 255, 0.08);border-radius:12px;
+  padding:16px;pointer-events:all;backdrop-filter:blur(16px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.panel h3{font-size:11px;letter-spacing:1px;color:#cbd5e1;margin-bottom:12px;text-transform:uppercase;font-weight:600;}
+#pControls{top:20px;left:20px;width:220px;}
+#pEmg{top:20px;right:20px;width:240px;}
+#pFft{top:185px;right:20px;width:240px;}
+#pPressure{bottom:85px;right:20px;width:160px;}
+#pChain{bottom:20px;left:50%;transform:translateX(-50%);width:530px;}
+#pStats{bottom:85px;left:20px;width:185px;}
+#pInfo{top:20px;left:50%;transform:translateX(-50%);pointer-events:none;text-align:center;background:rgba(20,27,40,0.6);border:1px solid rgba(255,255,255,0.06);padding:8px 16px;border-radius:8px;}
+#pInfo span{font-size:10px;letter-spacing:2px;color:#94a3b8;font-weight:500;}
+
+.btn{display:block;width:100%;margin:6px 0;padding:8px 12px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+  color:#e2e8f0;font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;
+  text-align:left;border-radius:6px;letter-spacing:0.5px;transition:all 0.2s;}
+.btn:hover{background:rgba(255,255,255,0.08);}
+.btn.active{background:rgba(56,189,248,0.15);border-color:#38bdf8;color:#38bdf8;}
+.btn.red{border-color:rgba(239,68,68,0.3);color:#f87171;}
+.btn.red.active{background:rgba(239,68,68,0.15);border-color:#ef4444;color:#ef4444;}
+.btn.grn{border-color:rgba(34,197,94,0.3);color:#4ade80;}
+.btn.grn.active{background:rgba(34,197,94,0.15);border-color:#22c55e;color:#22c55e;}
+
+.sep{height:1px;background:rgba(255,255,255,0.06);margin:12px 0;}
+.lbl{font-size:10px;color:#94a3b8;letter-spacing:0.5px;margin:10px 0 4px;font-weight:500;}
+input[type=range]{width:100%;margin:6px 0;accent-color:#38bdf8;height:4px;cursor:pointer;}
+
+.ltog{display:flex;align-items:center;gap:8px;font-size:11px;margin:5px 0;cursor:pointer;color:#cbd5e1;}
+.ltog input{cursor:pointer;accent-color:#38bdf8;}
+.ldot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+.snode{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;
+  border:1px solid rgba(255,255,255,0.1);border-radius:20px;font-size:9.5px;
+  letter-spacing:0.5px;transition:all 0.3s;color:#94a3b8;white-space:nowrap;}
+.snode.active{border-color:#38bdf8;color:#38bdf8;box-shadow:0 0 12px rgba(56,189,248,0.2);}
+.snode.blocked{border-color:#ef4444;color:#ef4444;box-shadow:0 0 12px rgba(239,68,68,0.25);}
+.schain{display:flex;align-items:center;gap:4px;overflow:hidden;}
+.sarr{color:rgba(255,255,255,0.15);font-size:12px;}
+
+.srow{display:flex;justify-content:space-between;font-size:11px;margin:6px 0;
+  border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:6px;align-items:center;}
+.sval{color:#f8fafc;font-weight:600;font-family:'Courier New',monospace;font-size:12px;}
+
+#labelsContainer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+.exploded-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.85);
+  border-left: 3px solid #38bdf8;
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: #f8fafc;
+  opacity: 0;
+  transition: opacity 0.3s;
+  backdrop-filter: blur(4px);
+  width: 140px;
+}
+.exploded-label.show { opacity: 1; }
+.exploded-label h3 { font-size: 11px; margin-bottom: 3px; font-weight: 600; text-transform: uppercase; color: #38bdf8; }
+.exploded-label p { font-size: 10px; color: #94a3b8; line-height: 1.3; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <!-- Info bar -->
+  <div class="panel" id="pInfo"><span>AURA-SLEEVE · SOFT ROBOTIC TREMOR ORTHOSIS · 3D SIMULATION</span></div>
+
+  <!-- Controls -->
+  <div class="panel" id="pControls">
+    <h3>⚡ Device Controls</h3>
+    <button class="btn red" id="btnTremor">▶ TREMOR: OFF</button>
+    <button class="btn" id="btnVol">🤚 VOLUNTARY: OFF</button>
+    <button class="btn" id="btnConstrict">💨 MANUAL CONSTRICT</button>
+    <div class="sep"></div>
+    <button class="btn grn" id="btnExplode">🔬 EXPLODE LAYERS: OFF</button>
+    <div class="lbl">CROSS-SECTION SLICE</div>
+    <input type="range" id="sliceSlider" min="0" max="1" step="0.005" value="1">
+    <div class="sep"></div>
+    <div class="lbl">LAYER VISIBILITY</div>
+    <label class="ltog"><input type="checkbox" checked data-layer="bone"><div class="ldot" style="background:#f5f5ea"></div>Bone (Ulna)</label>
+    <label class="ltog"><input type="checkbox" checked data-layer="arm"><div class="ldot" style="background:#c2605a"></div>Muscle Tissue</label>
+    <label class="ltog"><input type="checkbox" checked data-layer="l1"><div class="ldot" style="background:#ffb74d"></div>Layer 1 — Sensing</label>
+    <label class="ltog"><input type="checkbox" checked data-layer="l2"><div class="ldot" style="background:#4fc3f7"></div>Layer 2 — Auxetic</label>
+    <label class="ltog"><input type="checkbox" checked data-layer="l3"><div class="ldot" style="background:#78909c"></div>Layer 3 — Kevlar</label>
+  </div>
+
+  <!-- EMG -->
+  <div class="panel" id="pEmg">
+    <h3>📊 EMG — Muscle Electrical Signal</h3>
+    <canvas id="emgC" width="206" height="72"></canvas>
+  </div>
+
+  <!-- FFT -->
+  <div class="panel" id="pFft">
+    <h3>📈 FFT — Frequency Domain</h3>
+    <canvas id="fftC" width="206" height="72"></canvas>
+  </div>
+
+  <!-- Pressure -->
+  <div class="panel" id="pPressure">
+    <h3>🔵 Cuff Pressure</h3>
+    <canvas id="pressC" width="126" height="90"></canvas>
+    <div id="pressVal" style="text-align:center;font-size:11px;color:#4fc3f7;margin-top:3px;">0 mmHg</div>
+  </div>
+
+  <!-- Signal chain -->
+  <div class="panel" id="pChain">
+    <h3>🔗 Signal Processing Chain</h3>
+    <div class="schain">
+      <div class="snode" id="nEMG">EMG</div><div class="sarr">→</div>
+      <div class="snode" id="nIMU">IMU</div><div class="sarr">→</div>
+      <div class="snode" id="nESP">ESP32-S3</div><div class="sarr">→</div>
+      <div class="snode" id="nFFT">FFT</div><div class="sarr">→</div>
+      <div class="snode" id="nOVR">OVERRIDE?</div><div class="sarr">→</div>
+      <div class="snode" id="nPMP">PUMP</div><div class="sarr">→</div>
+      <div class="snode" id="nVLV">VALVE</div><div class="sarr">→</div>
+      <div class="snode" id="nSLV">SLEEVE</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="panel" id="pStats">
+    <h3>📡 Live Data</h3>
+    <div class="srow"><span>Response Time</span><span class="sval" id="sResponse">—</span></div>
+    <div class="srow"><span>Pressure</span><span class="sval" id="sPressure">0 mmHg</span></div>
+    <div class="srow"><span>Tremor Freq</span><span class="sval" id="sHz">—</span></div>
+    <div class="srow"><span>EMG Burst</span><span class="sval" id="sEmg">—</span></div>
+    <div class="srow"><span>Status</span><span class="sval" id="sStatus">IDLE</span></div>
+  </div>
+</div>
+
+<div id="labelsContainer">
+  <div class="exploded-label" id="lblBone"><h3>Ulna Bone & Frame</h3><p>Internal support structure forming baseline reference.</p></div>
+  <div class="exploded-label" id="lblArm"><h3>Muscle & Soft Tissue</h3><p>Patient forearm where biomechanical spasms originate.</p></div>
+  <div class="exploded-label" id="lblL1"><h3>Sensing Layer</h3><p>Dry-film EMG electrode array monitoring intent.</p></div>
+  <div class="exploded-label" id="lblL2"><h3>Auxetic Layer</h3><p>Programmable soft pneumatics that constrict upon detection.</p></div>
+  <div class="exploded-label" id="lblL3"><h3>Outer Mesh</h3><p>Rigid containment Kevlar directing pressure inwards.</p></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// ============================================================
+//  AURA-SLEEVE — FULL 3D SIMULATION
+//  Three.js r128 | Vanilla JS | Single HTML
+// ============================================================
+
+// ── SCENE / RENDERER ────────────────────────────────────────
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x07080f, 1);
+renderer.localClippingEnabled = true;
+renderer.shadowMap.enabled = false;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x07080f, 0.35);
+
+const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.01, 60);
+camera.position.set(1.6, 0.7, 1.6);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.minDistance = 0.5;
+controls.maxDistance = 8;
+
+// Clipping plane for cross-section (clips +Z side)
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 100);
+
+// ── LIGHTS ──────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x0a1828, 3.5));
+const sun = new THREE.DirectionalLight(0xaac8ff, 1.4);
+sun.position.set(3, 5, 4);
+scene.add(sun);
+const bluePoint = new THREE.PointLight(0x4fc3f7, 3.5, 8);
+bluePoint.position.set(0, 1.5, 0);
+scene.add(bluePoint);
+const purplePoint = new THREE.PointLight(0x7c4dff, 2, 6);
+purplePoint.position.set(-1, -1, 0.5);
+scene.add(purplePoint);
+const warmPoint = new THREE.PointLight(0xff6f00, 1, 4);
+warmPoint.position.set(0.8, 0, 1);
+scene.add(warmPoint);
+
+// ── CONSTANTS ───────────────────────────────────────────────
+const SL = 1.5;         // sleeve length
+const R_BONE = 0.062;
+const R_MUSC = 0.155;
+const R_L1   = 0.21;
+const R_L2   = 0.295;
+const R_L3   = 0.395;
+const NCOLS  = 8;       // auxetic columns
+const NROWS  = 5;       // auxetic rows
+
+// ── STATE ────────────────────────────────────────────────────
+const S = {
+  tremorOn: false,
+  voluntary: false,
+  constricting: false,
+  cp: 0,           // constrict progress 0→1
+  pressure: 0,
+  exploded: false,
+  sliceVal: 1,
+  responseStart: 0,
+  responseMs: null,
+  chainTimer: 0,
+};
+
+// ── LAYER GROUPS ─────────────────────────────────────────────
+const Gbone = new THREE.Group();
+const Garm  = new THREE.Group();
+const Gl1   = new THREE.Group();
+const Gl2   = new THREE.Group();
+const Gl3   = new THREE.Group();
+const Gall  = new THREE.Group();  // tremor parent
+[Gbone, Garm, Gl1, Gl2, Gl3].forEach(g => Gall.add(g));
+scene.add(Gall);
+
+// Explode offsets (X displacement)
+const explodeOff = { bone:0, arm:0, l1:0.38, l2:0.76, l3:1.14 };
+const layerGMap  = { bone:Gbone, arm:Garm, l1:Gl1, l2:Gl2, l3:Gl3 };
+
+// Shared materials we'll mutate in animation
+let auxLineMat, auxLineMatSec;
+let channelDotMats = [];
+let airParticleMats = [];
+let emgPadGlowMats = [];
+let hapticRingMats = [];
+
+// ── HELPER: cylinder point ───────────────────────────────────
+function cpt(angle, y, r) {
+  return new THREE.Vector3(r * Math.cos(angle), y, r * Math.sin(angle));
+}
+
+// ── 1. BONE ──────────────────────────────────────────────────
+(function(){
+  const geo = new THREE.CylinderGeometry(R_BONE, R_BONE, SL, 16);
+  const mat = new THREE.MeshPhysicalMaterial({
+    color:0xf0ede0, roughness:0.25, metalness:0, transparent:true, opacity:0.9,
+    clippingPlanes:[clipPlane], clipIntersection:false
+  });
+  Gbone.add(new THREE.Mesh(geo, mat));
+
+  // Hand bones (stylized core block)
+  const pBone = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.22, 0.04), mat);
+  pBone.position.set(0, -SL/2 - 0.11, 0);
+  Gbone.add(pBone);
+
+  // Periosteum rim lines
+  const rimMat = new THREE.LineBasicMaterial({color:0xccccaa, transparent:true, opacity:0.3});
+  for(let i=0;i<6;i++){
+    const a = (i/6)*Math.PI*2;
+    const pts=[];
+    for(let j=0;j<=30;j++){
+      const t=j/30; const y=-SL/2+t*SL;
+      pts.push(new THREE.Vector3((R_BONE+0.002)*Math.cos(a),y,(R_BONE+0.002)*Math.sin(a)));
+    }
+    Gbone.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),rimMat));
+  }
+})();
+
+// ── 2. ARM MUSCLE TISSUE + HAND ──────────────────────────────
+(function(){
+  const geo = new THREE.CylinderGeometry(R_MUSC, R_MUSC, SL, 28);
+  const mat = new THREE.MeshPhysicalMaterial({
+    color:0xb04a44, roughness:0.85, metalness:0, transparent:true, opacity:0.42,
+    clippingPlanes:[clipPlane]
+  });
+  Garm.add(new THREE.Mesh(geo, mat));
+  
+  // Hand Base (Palm)
+  const palmGeo = new THREE.BoxGeometry(0.18, 0.28, 0.08);
+  const palm = new THREE.Mesh(palmGeo, mat);
+  palm.position.set(0, -SL/2 - 0.14, 0);
+  Garm.add(palm);
+
+  // Fingers
+  const fingGeo = new THREE.CylinderGeometry(0.016, 0.014, 0.16, 8);
+  for(let i=0; i<4; i++){
+    const fing = new THREE.Mesh(fingGeo, mat);
+    fing.position.set(-0.06 + i*0.04, -SL/2 - 0.35, 0);
+    Garm.add(fing);
+  }
+  
+  // Thumb
+  const thumbGeo = new THREE.CylinderGeometry(0.02, 0.018, 0.12, 8);
+  const thumb = new THREE.Mesh(thumbGeo, mat);
+  thumb.position.set(0.1, -SL/2 - 0.18, 0.02);
+  thumb.rotation.z = Math.PI/5;
+  Garm.add(thumb);
+
+  // Muscle fiber lines (only on forearm)
+  const fibMat = new THREE.LineBasicMaterial({color:0xe06060, transparent:true, opacity:0.25});
+  for(let i=0;i<14;i++){
+    const a=(i/14)*Math.PI*2; const r=R_MUSC*0.88;
+    const pts=[];
+    for(let j=0;j<=24;j++){
+      const t=j/24; const y=-SL/2+t*SL;
+      const wiggle=Math.sin(t*Math.PI*4+a)*0.007;
+      pts.push(new THREE.Vector3((r+wiggle)*Math.cos(a),y,(r+wiggle)*Math.sin(a)));
+    }
+    Garm.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),fibMat));
+  }
+})();
+
+// ── 3. LAYER 1 — SENSING INTERFACE ──────────────────────────
+(function(){
+  // Main shell
+  const geo = new THREE.CylinderGeometry(R_L1, R_L1, SL, 32, 1, true);
+  const mat = new THREE.MeshPhysicalMaterial({
+    color:0xffaa77, roughness:0.4, metalness:0, transparent:true, opacity:0.28,
+    side:THREE.DoubleSide, clippingPlanes:[clipPlane]
+  });
+  Gl1.add(new THREE.Mesh(geo, mat));
+
+  // EMG dry-film electrode pads (gold discs)
+  const padMat = new THREE.MeshPhysicalMaterial({color:0xffd700, metalness:0.85, roughness:0.15, emissive:0x553300});
+  for(let row=0;row<3;row++){
+    for(let col=0;col<6;col++){
+      const angle = (col/6)*Math.PI*2 + (row%2)*(Math.PI/6);
+      const y = -0.42 + row*0.42;
+      // Pad
+      const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.013,0.013,0.005,8), padMat);
+      pad.position.set(R_L1*Math.cos(angle), y, R_L1*Math.sin(angle));
+      pad.lookAt(new THREE.Vector3(0, y, 0)); pad.rotateZ(Math.PI/2);
+      Gl1.add(pad);
+      // Glow ring around pad
+      const gMat = new THREE.MeshBasicMaterial({color:0xffd700, transparent:true, opacity:0});
+      const gRing = new THREE.Mesh(new THREE.TorusGeometry(0.02,0.003,6,14), gMat);
+      gRing.position.copy(pad.position);
+      gRing.lookAt(new THREE.Vector3(0, y, 0));
+      emgPadGlowMats.push(gMat);
+      Gl1.add(gRing);
+    }
+  }
+
+  // LRA haptic motors
+  const lraMat = new THREE.MeshPhysicalMaterial({color:0x888898, metalness:0.92, roughness:0.15});
+  for(let i=0;i<4;i++){
+    const angle=(i/4)*Math.PI*2;
+    const y = 0;
+    const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.038,8), lraMat);
+    motor.position.set(R_L1*Math.cos(angle), y, R_L1*Math.sin(angle));
+    motor.lookAt(new THREE.Vector3(0,0,0)); motor.rotateZ(Math.PI/2);
+    Gl1.add(motor);
+    // Haptic vibration ring
+    const hrMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0});
+    const hr = new THREE.Mesh(new THREE.TorusGeometry(0.032,0.0045,8,18), hrMat);
+    hr.position.copy(motor.position);
+    hr.lookAt(new THREE.Vector3(0,0,0));
+    hapticRingMats.push({mat:hrMat, mesh:hr});
+    Gl1.add(hr);
+  }
+})();
+
+// ── 4. LAYER 2 — AUXETIC ENGINE ──────────────────────────────
+const auxCells = [];
+(function(){
+  // Translucent shell
+  const sGeo = new THREE.CylinderGeometry(R_L2, R_L2, SL, 32, 1, true);
+  const sMat = new THREE.MeshPhysicalMaterial({
+    color:0x1a3a5c, roughness:0.25, metalness:0.1, transparent:true, opacity:0.22,
+    side:THREE.DoubleSide, clippingPlanes:[clipPlane]
+  });
+  const shell = new THREE.Mesh(sGeo, sMat);
+  shell.userData.isL2Shell = true;
+  Gl2.add(shell);
+
+  // Shared auxetic line material (primary ribs)
+  auxLineMat = new THREE.LineBasicMaterial({color:0x29b6f6, transparent:true, opacity:0.72});
+  // Secondary lighter lines
+  auxLineMatSec = new THREE.LineBasicMaterial({color:0x0077aa, transparent:true, opacity:0.45});
+
+  const cellAngle = (Math.PI*2)/NCOLS;
+  const cellH = SL/NROWS;
+
+  for(let col=0;col<NCOLS;col++){
+    for(let row=0;row<NROWS;row++){
+      const a0 = (col/NCOLS)*Math.PI*2;
+      const a1 = a0 + cellAngle;
+      const am = a0 + cellAngle/2;
+      const y0 = -SL/2 + row*cellH;
+      const y1 = y0 + cellH;
+      const ym = y0 + cellH/2;
+      // Waist factor: 0.3 = strongly re-entrant, 0.5 = neutral hex
+      const wFrac = 0.28;
+      const wOff  = (cellAngle/2)*(1-wFrac);
+      const wL = a0 + wOff;
+      const wR = a1 - wOff;
+
+      // Cell outline: re-entrant hexagonal bowtie
+      const outline = [
+        cpt(a0,y1,R_L2), cpt(am,y1,R_L2), cpt(a1,y1,R_L2),
+        cpt(wR,ym,R_L2), cpt(a1,y0,R_L2), cpt(am,y0,R_L2),
+        cpt(a0,y0,R_L2), cpt(wL,ym,R_L2), cpt(a0,y1,R_L2),
+      ];
+      Gl2.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(outline), auxLineMat));
+
+      // Internal diagonal ribs (carry microchannels)
+      const ribL = [cpt(a0,y1,R_L2), cpt(wL,ym,R_L2), cpt(a0,y0,R_L2)];
+      const ribR = [cpt(a1,y1,R_L2), cpt(wR,ym,R_L2), cpt(a1,y0,R_L2)];
+      Gl2.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ribL), auxLineMatSec));
+      Gl2.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ribR), auxLineMatSec));
+
+      // Microchannel node dots at waist points
+      for(const pos of [cpt(wL,ym,R_L2), cpt(wR,ym,R_L2)]){
+        const dm = new THREE.MeshBasicMaterial({color:0x00e5ff, transparent:true, opacity:0.85});
+        const d  = new THREE.Mesh(new THREE.SphereGeometry(0.007,6,6), dm);
+        d.position.copy(pos);
+        channelDotMats.push(dm);
+        Gl2.add(d);
+      }
+
+      auxCells.push({ a0,a1,am,y0,y1,ym, wL,wR, wOff, cellAngle, cellH, wFrac });
+    }
+  }
+
+  // Air particles (cyan glowing dots flowing through channels)
+  for(let i=0;i<60;i++){
+    const pm = new THREE.MeshBasicMaterial({color:0x00e5ff, transparent:true, opacity:0});
+    const p  = new THREE.Mesh(new THREE.SphereGeometry(0.005,4,4), pm);
+    p.userData = {
+      t: Math.random(),
+      speed: 0.4+Math.random()*0.5,
+      col: Math.floor(Math.random()*NCOLS),
+      row: Math.floor(Math.random()*NROWS),
+      side: Math.random()>0.5 ? 1 : -1,
+    };
+    airParticleMats.push(pm);
+    Gl2.add(p);
+  }
+
+  // IMU chip on sleeve surface
+  const imuMat = new THREE.MeshPhysicalMaterial({color:0x1a237e, metalness:0.7, roughness:0.2});
+  const imu = new THREE.Mesh(new THREE.BoxGeometry(0.055,0.014,0.055), imuMat);
+  imu.position.set(R_L2*Math.cos(0.4), 0.55, R_L2*Math.sin(0.4));
+  Gl2.add(imu);
+  // IMU label dots
+  for(let i=0;i<4;i++){
+    const dm2 = new THREE.Mesh(new THREE.SphereGeometry(0.003,4,4),
+      new THREE.MeshBasicMaterial({color:0xffd700}));
+    dm2.position.set(imu.position.x+(-0.015+i*0.01), imu.position.y+0.009, imu.position.z);
+    Gl2.add(dm2);
+  }
+})();
+
+// ── 5. LAYER 3 — OUTER KEVLAR MESH ──────────────────────────
+(function(){
+  // Main opaque shell
+  const geo = new THREE.CylinderGeometry(R_L3, R_L3, SL, 28, 10, true);
+  const mat = new THREE.MeshPhysicalMaterial({
+    color:0x2e3a42, roughness:0.88, metalness:0.28, transparent:true, opacity:0.5,
+    side:THREE.DoubleSide, clippingPlanes:[clipPlane]
+  });
+  Gl3.add(new THREE.Mesh(geo, mat));
+
+  // Helical Kevlar weave
+  const wMat = new THREE.LineBasicMaterial({color:0x546e7a, transparent:true, opacity:0.75});
+  const wMat2= new THREE.LineBasicMaterial({color:0x37474f, transparent:true, opacity:0.6});
+  const NWEAVE = 18;
+  for(let dir=0;dir<2;dir++){
+    for(let i=0;i<NWEAVE;i++){
+      const sa = (i/NWEAVE)*Math.PI*2;
+      const turns = dir===0 ? 2.5 : -2.5;
+      const pts=[];
+      for(let j=0;j<=50;j++){
+        const t=j/50;
+        pts.push(new THREE.Vector3(
+          R_L3*Math.cos(sa+turns*Math.PI*2*t),
+          -SL/2+t*SL,
+          R_L3*Math.sin(sa+turns*Math.PI*2*t)
+        ));
+      }
+      Gl3.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), dir===0?wMat:wMat2));
+    }
+  }
+  // Horizontal rings
+  const rMat = new THREE.LineBasicMaterial({color:0x607d8b, transparent:true, opacity:0.45});
+  for(let i=0;i<=12;i++){
+    const y=-SL/2+(i/12)*SL;
+    const pts=[];
+    for(let j=0;j<=34;j++){ const a=(j/34)*Math.PI*2; pts.push(new THREE.Vector3(R_L3*Math.cos(a),y,R_L3*Math.sin(a))); }
+    Gl3.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), rMat));
+  }
+  // End caps (rigid end rings)
+  const capMat = new THREE.MeshPhysicalMaterial({color:0x455a64, metalness:0.7, roughness:0.3});
+  for(const yy of [-SL/2, SL/2]){
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(R_L3, 0.012, 8, 30), capMat);
+    ring.rotation.x = Math.PI/2; ring.position.y = yy;
+    Gl3.add(ring);
+  }
+})();
+
+// ── 6. BLOOD FLOW PARTICLES ──────────────────────────────────
+const bloodPs = [];
+for(let i=0;i<35;i++){
+  const bm = new THREE.MeshBasicMaterial({color:0xff1744, transparent:true, opacity:0.75});
+  const bp = new THREE.Mesh(new THREE.SphereGeometry(0.0055,4,4), bm);
+  bp.userData = {
+    angle: Math.random()*Math.PI*2,
+    radius: R_MUSC*0.5 + (R_L1-R_MUSC)*Math.random()*0.9,
+    t: Math.random(),
+    speed: 0.12+Math.random()*0.1,
+    angSpeed: (Math.random()-0.5)*0.3,
+  };
+  Gall.add(bp);
+  bloodPs.push({mesh:bp, mat:bm});
+}
+
+// ── 7. EXTERNAL PUMP ─────────────────────────────────────────
+const Gpump = new THREE.Group();
+(function(){
+  const bodyMat = new THREE.MeshPhysicalMaterial({color:0x37474f, metalness:0.7, roughness:0.3});
+  const pistonMat = new THREE.MeshPhysicalMaterial({color:0x90a4ae, metalness:0.92, roughness:0.1});
+  const body   = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.14,12), bodyMat);
+  const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.026,0.026,0.06,8), pistonMat);
+  piston.userData.isPiston = true;
+  Gpump.add(body); Gpump.add(piston);
+  Gpump.position.set(-0.68, 0, 0);
+  Gpump.rotation.z = Math.PI/2;
+  scene.add(Gpump);
+  // Connector tube
+  const tubePts = [];
+  for(let i=0;i<=24;i++){
+    const t=i/24;
+    tubePts.push(new THREE.Vector3(-0.68+t*0.68, Math.sin(t*Math.PI)*0.05, 0));
+  }
+  const tGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tubePts),24,0.007,7,false);
+  const tMat = new THREE.MeshBasicMaterial({color:0x004d40});
+  scene.add(new THREE.Mesh(tGeo, tMat));
+  // Label
+  const valveGeo = new THREE.BoxGeometry(0.04,0.04,0.04);
+  const valveMat = new THREE.MeshPhysicalMaterial({color:0x880000, metalness:0.8});
+  const valve = new THREE.Mesh(valveGeo, valveMat);
+  valve.userData.isValve = true;
+  valve.position.set(-0.28, 0, 0);
+  scene.add(valve);
+})();
+
+// ── 8. GRID FLOOR ─────────────────────────────────────────────
+(function(){
+  const gMat = new THREE.LineBasicMaterial({color:0x0d1a2a, transparent:true, opacity:0.5});
+  const SIZE=4, STEP=0.25;
+  for(let i=-SIZE;i<=SIZE;i+=STEP){
+    const pts1=[new THREE.Vector3(i,-SL/2-0.05,-SIZE), new THREE.Vector3(i,-SL/2-0.05,SIZE)];
+    const pts2=[new THREE.Vector3(-SIZE,-SL/2-0.05,i), new THREE.Vector3(SIZE,-SL/2-0.05,i)];
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts1),gMat));
+    scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts2),gMat));
+  }
+})();
+
+// ── 9. 2D CANVAS DRAWING ─────────────────────────────────────
+const emgCtx     = document.getElementById('emgC').getContext('2d');
+const fftCtx     = document.getElementById('fftC').getContext('2d');
+const pressCtx   = document.getElementById('pressC').getContext('2d');
+const emgBuf     = new Array(206).fill(36);
+let   emgPhase   = 0;
+
+function drawEMG(t) {
+  emgCtx.fillStyle = 'rgba(4,12,28,0.25)';
+  emgCtx.fillRect(0,0,206,72);
+  emgBuf.shift();
+  let v = 36;
+  if(S.tremorOn && !S.voluntary){
+    const burst = Math.abs(Math.sin(t*Math.PI*2*6))*28 + Math.abs(Math.sin(t*Math.PI*2*12))*8;
+    v = 36 - burst + (Math.random()-0.5)*4;
+  } else {
+    v = 36 + (Math.random()-0.5)*3.5;
+  }
+  emgBuf.push(Math.max(2, Math.min(70, v)));
+  // Grid
+  emgCtx.strokeStyle='rgba(79,195,247,0.1)'; emgCtx.lineWidth=0.5;
+  for(let i=0;i<4;i++){const y=(i/3)*72;emgCtx.beginPath();emgCtx.moveTo(0,y);emgCtx.lineTo(206,y);emgCtx.stroke();}
+  // Threshold line
+  emgCtx.setLineDash([3,3]); emgCtx.strokeStyle='rgba(255,183,77,0.4)'; emgCtx.lineWidth=0.8;
+  emgCtx.beginPath(); emgCtx.moveTo(0,20); emgCtx.lineTo(206,20); emgCtx.stroke();
+  emgCtx.setLineDash([]);
+  // Waveform
+  emgCtx.strokeStyle = S.tremorOn && !S.voluntary ? '#ff5050' : '#4fc3f7';
+  emgCtx.lineWidth=1.5; emgCtx.beginPath();
+  emgBuf.forEach((vv,i)=>{ i===0?emgCtx.moveTo(i,vv):emgCtx.lineTo(i,vv); });
+  emgCtx.stroke();
+  // Labels
+  emgCtx.fillStyle='rgba(79,195,247,0.55)'; emgCtx.font='7px Courier New';
+  emgCtx.fillText('μV', 2, 9);
+  emgCtx.fillText(S.tremorOn?'BURST DETECTED':'BASELINE', 140, 9);
+}
+
+function drawFFT(t) {
+  fftCtx.fillStyle='rgba(4,12,28,0.25)'; fftCtx.fillRect(0,0,206,72);
+  const BINS=16;
+  const bW = 206/BINS - 1.5;
+  for(let i=0;i<BINS;i++){
+    const freq = i+1;
+    let power = 3+Math.random()*4;
+    if(S.tremorOn && !S.voluntary){
+      if(freq>=5&&freq<=7){ power=58+Math.random()*14; }
+      else if(freq>=4&&freq<=8){ power=16+Math.random()*9; }
+      else if(freq===1||freq===2){ power=8+Math.random()*5; }
+    }
+    power = Math.min(68, power);
+    const x = i*(bW+1.5)+1;
+    const isTremor = freq>=5&&freq<=7&&S.tremorOn&&!S.voluntary;
+    const grad = fftCtx.createLinearGradient(x,72-power,x,72);
+    grad.addColorStop(0, isTremor?'rgba(255,80,80,0.95)':'rgba(79,195,247,0.7)');
+    grad.addColorStop(1, isTremor?'rgba(150,0,0,0.3)':'rgba(79,195,247,0.1)');
+    fftCtx.fillStyle=grad;
+    fftCtx.fillRect(x, 72-power, bW, power);
+  }
+  fftCtx.fillStyle='rgba(79,195,247,0.5)'; fftCtx.font='7px Courier New';
+  fftCtx.fillText('Hz →', 182, 70);
+  fftCtx.fillText('1', 2, 70); fftCtx.fillText('6', 76, 70); fftCtx.fillText('16', 188, 70);
+  if(S.tremorOn&&!S.voluntary){
+    fftCtx.fillStyle='#ff5050'; fftCtx.font='bold 8px Courier New';
+    fftCtx.fillText('▲ 5-6 Hz TREMOR PEAK', 44, 10);
+  }
+}
+
+function drawPressure() {
+  const W=126, H=90, cx=63, cy=58, r=40;
+  pressCtx.clearRect(0,0,W,H);
+  const sa=Math.PI*0.78, ea=Math.PI*2.22;
+  const maxP=40, frac=Math.min(S.pressure/maxP,1);
+  const pa = sa + frac*(ea-sa);
+  // BG arc
+  pressCtx.strokeStyle='rgba(79,195,247,0.18)'; pressCtx.lineWidth=9;
+  pressCtx.beginPath(); pressCtx.arc(cx,cy,r,sa,ea); pressCtx.stroke();
+  // Fill arc
+  const col = S.pressure>35?'#ff5050':(S.pressure>20?'#ffb74d':'#29b6f6');
+  pressCtx.strokeStyle=col; pressCtx.lineWidth=9;
+  pressCtx.beginPath(); pressCtx.arc(cx,cy,r,sa,pa); pressCtx.stroke();
+  // Danger marker at 35 mmHg
+  const dAng = sa+(35/maxP)*(ea-sa);
+  pressCtx.strokeStyle='#ff5050'; pressCtx.lineWidth=2;
+  pressCtx.beginPath(); pressCtx.arc(cx,cy,r+5,dAng-0.04,dAng+0.04); pressCtx.stroke();
+  // Needle
+  pressCtx.strokeStyle='#ffffff'; pressCtx.lineWidth=2;
+  pressCtx.beginPath(); pressCtx.moveTo(cx,cy);
+  pressCtx.lineTo(cx+(r-9)*Math.cos(pa),cy+(r-9)*Math.sin(pa)); pressCtx.stroke();
+  // Center dot
+  pressCtx.fillStyle='#ffffff'; pressCtx.beginPath(); pressCtx.arc(cx,cy,4,0,Math.PI*2); pressCtx.fill();
+  // Text
+  pressCtx.fillStyle='rgba(79,195,247,0.55)'; pressCtx.font='7.5px Courier New'; pressCtx.textAlign='center';
+  pressCtx.fillText('SAFE MAX 35 mmHg', cx, 14);
+  pressCtx.fillText('0', cx-r*0.9, cy+r*0.5);
+  pressCtx.fillText('40', cx+r*0.85, cy+r*0.5);
+}
+
+// ── 10. SIGNAL CHAIN ─────────────────────────────────────────
+const nodes = {
+  EMG: document.getElementById('nEMG'),
+  IMU: document.getElementById('nIMU'),
+  ESP: document.getElementById('nESP'),
+  FFT: document.getElementById('nFFT'),
+  OVR: document.getElementById('nOVR'),
+  PMP: document.getElementById('nPMP'),
+  VLV: document.getElementById('nVLV'),
+  SLV: document.getElementById('nSLV'),
+};
+
+function updateChain() {
+  Object.values(nodes).forEach(n => n.classList.remove('active','blocked'));
+  if(!S.tremorOn) return;
+  const delay = (el, ms, cls) => setTimeout(()=>el.classList.add(cls), ms);
+  delay(nodes.EMG,0,'active');
+  delay(nodes.IMU,80,'active');
+  delay(nodes.ESP,160,'active');
+  delay(nodes.FFT,240,'active');
+  if(S.voluntary){ delay(nodes.OVR,320,'blocked'); return; }
+  delay(nodes.OVR,320,'active');
+  delay(nodes.PMP,400,'active');
+  delay(nodes.VLV,480,'active');
+  if(S.constricting) delay(nodes.SLV,560,'active');
+}
+
+// ── 11. CONTROLS ─────────────────────────────────────────────
+let autoConstrictTimer = null;
+
+document.getElementById('btnTremor').addEventListener('click', function(){
+  S.tremorOn = !S.tremorOn;
+  this.textContent = `▶ TREMOR: ${S.tremorOn?'ON':'OFF'}`;
+  this.classList.toggle('active', S.tremorOn);
+  if(S.tremorOn && !S.voluntary){
+    S.responseStart = performance.now();
+    autoConstrictTimer = setTimeout(()=>{
+      if(S.tremorOn && !S.voluntary){ S.constricting = true; }
+    }, 580);
+  } else {
+    clearTimeout(autoConstrictTimer);
+    if(!S.tremorOn) S.constricting = false;
+  }
+});
+
+document.getElementById('btnVol').addEventListener('click', function(){
+  S.voluntary = !S.voluntary;
+  this.textContent = `🤚 VOLUNTARY: ${S.voluntary?'ON':'OFF'}`;
+  this.classList.toggle('active', S.voluntary);
+  if(S.voluntary) S.constricting = false;
+});
+
+document.getElementById('btnConstrict').addEventListener('click', function(){
+  S.constricting = !S.constricting;
+  this.classList.toggle('active', S.constricting);
+});
+
+document.getElementById('btnExplode').addEventListener('click', function(){
+  S.exploded = !S.exploded;
+  this.textContent = `🔬 EXPLODE LAYERS: ${S.exploded?'ON':'OFF'}`;
+  this.classList.toggle('active', S.exploded);
+});
+
+document.getElementById('sliceSlider').addEventListener('input', function(){
+  S.sliceVal = parseFloat(this.value);
+  if(S.sliceVal < 0.99){
+    clipPlane.constant = S.sliceVal * (R_L3 + 0.05);
+    renderer.clippingPlanes = [clipPlane];
+  } else {
+    renderer.clippingPlanes = [];
+  }
+});
+
+document.querySelectorAll('[data-layer]').forEach(inp => {
+  inp.addEventListener('change', function(){
+    layerGMap[this.dataset.layer].visible = this.checked;
+  });
+});
+
+// ── 12. ANIMATION LOOP ───────────────────────────────────────
+let lastT = 0;
+const TREMOR_HZ = 5.2;
+
+function animate(timestamp) {
+  requestAnimationFrame(animate);
+  const dt = Math.min((timestamp - lastT)/1000, 0.05);
+  lastT = timestamp;
+  const t = timestamp/1000;
+
+  // ── TREMOR SHAKE ──
+  const tremorAmt = (S.tremorOn && !S.voluntary)
+    ? Math.sin(t*Math.PI*2*TREMOR_HZ)*0.022 : 0;
+  const tremorAmt2 = (S.tremorOn && !S.voluntary)
+    ? Math.sin(t*Math.PI*2*TREMOR_HZ*0.73 + 1.1)*0.012 : 0;
+  Gall.position.x = tremorAmt;
+  Gall.position.z = tremorAmt2;
+
+  // ── CONSTRICTION PROGRESS ──
+  if(S.constricting && !S.voluntary){
+    S.cp = Math.min(S.cp + dt*0.9, 1);
+    if(S.responseMs === null && S.responseStart > 0 && S.cp > 0.05){
+      S.responseMs = (performance.now() - S.responseStart).toFixed(0);
+      document.getElementById('sResponse').textContent = S.responseMs + 'ms';
+    }
+  } else {
+    S.cp = Math.max(S.cp - dt*0.7, 0);
+    if(S.cp < 0.01) S.responseMs = null;
+  }
+
+  // ── SCALE LAYERS (Inward pressure effect) ──
+  const cScale = 1 - S.cp * 0.17;
+  Gl2.scale.setScalar(cScale);
+  Gl1.scale.setScalar(1 - S.cp * 0.055);
+  
+  // Squeeze arm tissue inward to show mechanism clearly
+  Garm.scale.x = 1 - S.cp * 0.10;
+  Garm.scale.z = 1 - S.cp * 0.10;
+
+  // ── AUXETIC LINE GLOW ──
+  if(auxLineMat){
+    const hue  = 0.53 - S.cp * 0.03;
+    const lum  = 0.45 + S.cp * 0.40;
+    auxLineMat.color.setHSL(hue, 1, lum);
+    auxLineMat.opacity = 0.72 + S.cp * 0.28;
+    auxLineMatSec.opacity = 0.45 + S.cp * 0.3;
+  }
+
+  // ── MICROCHANNEL NODES ──
+  channelDotMats.forEach(m => {
+    m.opacity = 0.7 + S.cp * 0.3 + Math.sin(t*8)*0.1*S.cp;
+    m.color.setHSL(0.53 + S.cp*0.05, 1, 0.55 + S.cp*0.2);
+  });
+
+  // ── AIR PARTICLES ──
+  const cellAngle2 = (Math.PI*2)/NCOLS;
+  const cellH2 = SL/NROWS;
+  Gl2.children.forEach(obj => {
+    if(!obj.userData || !obj.userData.speed) return;
+    const d = obj.userData;
+    d.t = (d.t + d.speed * dt) % 1;
+    const a0 = (d.col/NCOLS)*Math.PI*2;
+    const y0 = -SL/2 + d.row*cellH2;
+    // Follow rib path (diagonal rib from corner to waist)
+    const wOff2 = (cellAngle2/2)*(1-0.28);
+    const wA = d.side>0 ? a0 + wOff2 : a0 + cellAngle2 - wOff2;
+    const lerp = (a,b,t2)=>a+(b-a)*t2;
+    const phase = d.t;
+    let angle, yp;
+    if(phase < 0.5){
+      const p2=phase*2;
+      angle = lerp(a0, wA, p2);
+      yp    = lerp(y0, y0+cellH2/2, p2);
+    } else {
+      const p2=(phase-0.5)*2;
+      angle = lerp(wA, d.side>0?a0:a0+cellAngle2, p2);
+      yp    = lerp(y0+cellH2/2, y0+cellH2, p2);
+    }
+    const r2 = R_L2*0.97;
+    obj.position.set(r2*Math.cos(angle), yp, r2*Math.sin(angle));
+    const mat2 = airParticleMats[Gl2.children.indexOf(obj) - (Gl2.children.length - airParticleMats.length)];
+    // opacity driven by constriction
+    if(obj.material) obj.material.opacity = S.cp > 0.05 ? 0.55 + Math.sin(t*12+d.t*6)*0.25 : 0;
+  });
+
+  // ── EMG PAD GLOW ──
+  emgPadGlowMats.forEach((m,i) => {
+    m.opacity = (S.tremorOn && !S.voluntary)
+      ? Math.abs(Math.sin(t*14+i*0.7))*0.7 : 0;
+  });
+
+  // ── HAPTIC RINGS ──
+  hapticRingMats.forEach(({mat,mesh},i) => {
+    if(S.constricting){
+      const pulse = Math.abs(Math.sin(t*9+i*1.57));
+      mat.opacity = pulse*0.85;
+      mesh.scale.setScalar(1+pulse*0.35);
+    } else {
+      mat.opacity = Math.max(mat.opacity - dt*3, 0);
+    }
+  });
+
+  // ── BLOOD FLOW ──
+  bloodPs.forEach(({mesh,mat}) => {
+    const d = mesh.userData;
+    d.t = (d.t + d.speed * dt) % 1;
+    d.angle += d.angSpeed * dt;
+    const y = -SL/2 + d.t*SL;
+    mesh.position.set(d.radius*Math.cos(d.angle), y, d.radius*Math.sin(d.angle));
+    mat.opacity = Math.max(0.1, 0.75 - S.cp*0.45);
+    mat.color.setHSL(0, 0.9, 0.35+S.cp*0.1);
+  });
+
+  // ── PUMP PISTON ──
+  Gpump.children.forEach(c => {
+    if(c.userData.isPiston){
+      c.position.y = S.constricting ? Math.sin(t*14)*0.025 : Math.sin(t*1)*0.003;
+    }
+  });
+
+  // ── VALVE COLOR ──
+  scene.children.forEach(obj => {
+    if(obj.userData && obj.userData.isValve && obj.material)
+      obj.material.color.setHex(S.constricting ? 0x00cc55 : 0x880000);
+  });
+
+  // ── PRESSURE ──
+  const tgtP = S.constricting ? 26 + Math.sin(t*0.4)*3.5 : 0;
+  S.pressure += (tgtP - S.pressure) * Math.min(dt*3.5, 1);
+  document.getElementById('pressVal').textContent = S.pressure.toFixed(1)+' mmHg';
+  document.getElementById('sPressure').textContent = S.pressure.toFixed(1)+' mmHg';
+
+  // ── STATS ──
+  document.getElementById('sHz').textContent = S.tremorOn ? TREMOR_HZ+' Hz' : '—';
+  document.getElementById('sEmg').textContent = S.tremorOn && !S.voluntary
+    ? (120+Math.random()*60).toFixed(0)+' μV' : '<30 μV';
+  const statusEl = document.getElementById('sStatus');
+  if(S.constricting){ statusEl.textContent='STABILIZING'; statusEl.style.color='#50ff8c'; }
+  else if(S.tremorOn){ statusEl.textContent='DETECTING'; statusEl.style.color='#ffb74d'; }
+  else { statusEl.textContent='IDLE'; statusEl.style.color='#4fc3f7'; }
+
+  // ── EXPLODE LAYERS ──
+  Object.entries(layerGMap).forEach(([name, grp]) => {
+    const tgtX = S.exploded ? explodeOff[name] : 0;
+    grp.position.x += (tgtX - grp.position.x) * dt*4.5;
+  });
+
+  // ── POINT LIGHTS PULSE ──
+  bluePoint.intensity = 3.5 + (S.tremorOn ? Math.abs(Math.sin(t*Math.PI*2*TREMOR_HZ))*2 : 0);
+  bluePoint.intensity += S.cp * 1.5;
+  warmPoint.intensity = S.constricting ? 1.5 + Math.sin(t*9)*0.5 : 1.0;
+
+  // ── UPDATE LABELS (Explode View) ──
+  if(S.exploded){
+    const w = window.innerWidth, h = window.innerHeight;
+    const toScreen = (grp, elId) => {
+      const el = document.getElementById(elId);
+      if(!el) return;
+      const v = new THREE.Vector3();
+      grp.getWorldPosition(v);
+      v.y += 0.4;
+      v.project(camera);
+      // Check if behind camera
+      if (v.z > 1) { 
+         el.classList.remove('show'); return; 
+      }
+      el.style.left = ((v.x*0.5 + 0.5) * w) + 'px';
+      el.style.top = ((1 - (v.y*0.5 + 0.5)) * h) + 'px';
+      el.classList.add('show');
+    };
+    toScreen(Gbone, 'lblBone');
+    toScreen(Garm, 'lblArm');
+    toScreen(Gl1, 'lblL1');
+    toScreen(Gl2, 'lblL2');
+    toScreen(Gl3, 'lblL3');
+  } else {
+    document.querySelectorAll('.exploded-label').forEach(el=>el.classList.remove('show'));
+  }
+
+  // ── SIGNAL CHAIN (pulse) ──
+  S.chainTimer += dt;
+  if(S.chainTimer > 1.3){ S.chainTimer=0; updateChain(); }
+
+  // ── 2D DRAWS ──
+  drawEMG(t);
+  drawFFT(t);
+  drawPressure();
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// ── RESIZE ───────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ── START ─────────────────────────────────────────────────────
+animate(0);
+</script>
+</body>
+</html>

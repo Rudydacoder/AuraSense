@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARMEX - Aura Sleeve Portal</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #14B8A6;
+            --accent-hover: #0d9488;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 60%);
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 32px 24px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-section i {
+            font-size: 48px;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .logo-section h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .logo-section p {
+            margin: 8px 0 0 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: var(--text-main);
+            font-size: 15px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent);
+        }
+
+        .row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .row .form-group {
+            flex: 1;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            background: var(--accent-hover);
+        }
+        
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="glass-panel">
+            <div class="logo-section">
+                <i class="ph-fill ph-activity"></i>
+                <h1>Welcome to Aura</h1>
+                <p>Enter your patient details to sync sleeve data.</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="pName" placeholder="e.g. John Doe" required>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" id="pAge" placeholder="34" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Blood Type</label>
+                        <input type="text" id="pBlood" placeholder="O+" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Diagnosis / Condition</label>
+                    <input type="text" id="pCondition" placeholder="e.g. Essential Tremor" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Doctor's Name</label>
+                    <input type="text" id="pDoctor" placeholder="Dr. Sarah Jenkins" required>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    Initialize Profile <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Collect data
+            const patientData = {
+                name: document.getElementById('pName').value,
+                age: document.getElementById('pAge').value,
+                blood: document.getElementById('pBlood').value,
+                condition: document.getElementById('pCondition').value,
+                doctor: document.getElementById('pDoctor').value,
+                joinedDate: new Date().toLocaleDateString()
+            };
+
+            // Save to localStorage
+            localStorage.setItem('auraPatientData', JSON.stringify(patientData));
+            
+            // Visual feedback
+            const btn = document.querySelector('.btn-submit');
+            btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> Syncing...';
+            btn.style.background = '#10B981';
+
+            // Navigate to main app after short delay
+            setTimeout(() => {
+                window.location.href = 'patient_app.html';
+            }, 800);
+        });
+        
+        // Auto-fill if already exists for quick testing
+        window.onload = () => {
+            const saved = localStorage.getItem('auraPatientData');
+            if(saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('pName').value = data.name || '';
+                document.getElementById('pAge').value = data.age || '';
+                document.getElementById('pBlood').value = data.blood || '';
+                document.getElementById('pCondition').value = data.condition || '';
+                document.getElementById('pDoctor').value = data.doctor || '';
+            }
+        };
+    </script>
+</body>
+</html>
